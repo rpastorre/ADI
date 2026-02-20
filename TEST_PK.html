@@ -2,253 +2,423 @@
 <html lang="eu">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PK Galdetegia / Test Pensamiento Computacional</title>
+    <title>PK Checklist / Lista de Verificación PC</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
-            --primary: #2563eb;
-            --secondary: #64748b;
-            --success: #059669;
-            --bg: #f8fafc;
-            --card: #ffffff;
-            --text: #1e293b;
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --bg: #f4f7f6;
+            --white: #ffffff;
+            --yes-bg: rgba(200, 230, 201, 0.4);
+            --no-bg: rgba(255, 205, 210, 0.4);
         }
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg);
-            color: var(--text);
             margin: 0;
-            padding: 20px;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            height: 100vh;
         }
-        .container {
-            max-width: 850px;
+
+        header {
+            position: fixed;
+            top: 0;
             width: 100%;
-            background: var(--card);
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            background: var(--white);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            padding: 15px 0;
         }
-        .header {
+        .header-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        .top-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 3px solid var(--primary);
-            padding-bottom: 15px;
-            margin-bottom: 25px;
+            margin-bottom: 10px;
         }
-        .lang-btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .question-card {
-            background: #fff;
-            border: 1px solid #e2e8f0;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            transition: transform 0.2s;
-        }
-        .question-card:hover { border-color: var(--primary); }
-        .options {
+        h1 { margin: 0; color: var(--primary); font-size: 1.3rem; flex-grow: 1; }
+        
+        .btn-group {
             display: flex;
-            gap: 30px;
-            margin-top: 10px;
+            gap: 10px;
         }
-        label { cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 500; }
-        .submit-btn {
+
+        .progress-container {
             width: 100%;
-            background: var(--success);
-            color: white;
-            border: none;
-            padding: 18px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            border-radius: 10px;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-        #results {
-            display: none;
-            animation: fadeIn 0.5s;
-        }
-        .pillar-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 25px;
-        }
-        .pillar-card {
-            background: #f1f5f9;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        .pillar-bar-bg {
             height: 8px;
-            background: #cbd5e1;
+            background: #e0e0e0;
             border-radius: 4px;
-            margin-top: 10px;
             overflow: hidden;
         }
-        .pillar-bar-fill {
-            height: 100%;
-            background: var(--primary);
+        #progress-bar {
             width: 0%;
-            transition: width 1s;
+            height: 100%;
+            background: #4caf50;
+            transition: width 0.4s ease;
         }
-        .score-total {
-            text-align: center;
-            font-size: 3.5rem;
-            font-weight: 800;
-            color: var(--success);
-            margin: 20px 0;
+
+        main {
+            margin-top: 130px;
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
         }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: var(--white);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background-color: var(--primary);
+            color: var(--white);
+            padding: 12px;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .lang-btn, .pdf-btn {
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+        .lang-btn { background: var(--accent); }
+        .pdf-btn { background: #e67e22; }
+
+        .row-yes { background-color: var(--yes-bg) !important; }
+        .row-no { background-color: var(--no-bg) !important; }
+        
+        .explanation-cell { font-size: 0.85rem; color: #444; width: 35%; }
+        .base-label {
+            display: block;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 4px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+        }
+        .hidden { display: none; }
+
+        /* Ajustes para impresión/PDF */
+        @media print {
+            header { position: static; box-shadow: none; }
+            main { margin-top: 0; overflow: visible; }
+            .btn-group { display: none; }
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <h1 id="title">Irakaskuntza PK-n</h1>
-        <button class="lang-btn" onclick="toggleLang()" id="langBtn">ESPAÑOL</button>
+<header>
+    <div class="header-content">
+        <div class="top-bar">
+            <h1 id="title">Irakaskuntza Estrategiak eta PK Checklist-a</h1>
+            <div class="btn-group">
+                <button class="pdf-btn" id="pdf-btn" onclick="exportToPDF()">PDF-ra esportatu</button>
+                <button class="lang-btn" id="lang-btn" onclick="toggleLang()">ESPAÑOL</button>
+            </div>
+        </div>
+        <div class="progress-container">
+            <div id="progress-bar"></div>
+        </div>
     </div>
-    
-    <p id="intro">Ebaluatu zure eguneroko irakaskuntza-praktika EBAUko azterketetara bideratuta:</p>
+</header>
 
-    <form id="quizForm">
-        <div id="quizContainer"></div>
-        <button type="button" class="submit-btn" onclick="processResults()" id="submitBtn">Emaitzak kalkulatu</button>
-    </form>
-
-    <div id="results">
-        <h2 id="resHeading">Zure diagnostikoa:</h2>
-        <div class="score-total"><span id="globalScore">0</span>%</div>
-        <p id="resDesc" style="text-align:center"></p>
-        
-        <div class="pillar-grid" id="pillarResults"></div>
-        
-        <button class="submit-btn" style="background: var(--secondary); margin-top: 40px;" onclick="location.reload()">Berrekin / Reiniciar</button>
+<main id="capture-area">
+    <div class="container">
+        <table>
+            <thead>
+                <tr>
+                    <th id="th-afirm" style="width: 50%;">Enuntziatua</th>
+                    <th style="width: 50px;">BAI</th>
+                    <th style="width: 50px;">EZ</th>
+                    <th id="th-expl">Arrazoitzea (PK)</th>
+                </tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+        </table>
     </div>
-</div>
+</main>
 
 <script>
     let currentLang = 'eu';
-    const CATS_ES = ['Descomposición', 'Identificación de patrones', 'Algoritmia', 'Abstracción', 'Verificación'];
-    const CATS_EU = ['Deskonposizioa', 'Patroi-identifikazioa', 'Algoritmia', 'Abstrakzioa', 'Egiaztapena'];
-
-    const questions = [
-        { cat: 0, correct: 0, es: "La optimización se puede abordar de forma global, sin separar función de restricciones.", eu: "Optimizazioa modu globalean lan daiteke, funtzioa eta murrizketak bereizi gabe." },
-        { cat: 0, correct: 1, es: "Hay que planificar los pasos intermedios en un problema de geometría analítica.", eu: "Geometria analitikoko problema batean tarteko urratsak planifikatu behar dira." },
-        { cat: 0, correct: 0, es: "No hace falta hacerse un diagrama para calcular probabilidades, puede hacerse directamente.", eu: "Ez dago diagrama bat egin beharrik probabilitateak kalkulatzeko, zuzenean egin daiteke." },
-        { cat: 0, correct: 1, es: "En la discusión de sistemas de ecuaciones, hay que analizar primero el determinante de la matriz principal y luego el de la ampliada.", eu: "Ekuazio-sistemen eztabaidan, lehenik matrize nagusiaren determinantea aztertu behar da eta gero zabalduarena." },
-        { cat: 0, correct: 1, es: "Para abordar el cálculo de áreas se deben identificar sistemáticamente los puntos de corte de la función con el eje de abscisas.", eu: "Azalerak kalkulatzeko, funtzioak abzisa-ardatzarekin dituen ebaki-puntuak sistematikoki identifikatu behar dira." },
-        { cat: 1, correct: 0, es: "Puede ser una buena estrategia calcular A2025 multiplicando la matriz por sí misma sucesivamente las veces que haga falta.", eu: "Estrategia ona izan daiteke A2025 kalkulatzea matrizea bere buruarekin biderkatuz behar adina aldiz." },
-        { cat: 1, correct: 1, es: "El concepto de 'tangente horizontal' siempre se corresponde con el patrón de derivada igual a cero", eu: "'Ukitzaile horizontala' kontzeptua beti bat dator deribatua zero izatearen patroiarekin." },
-        { cat: 1, correct: 0, es: "No hace falta utilizar la tipificación para resolver los problemas de distribución normal", eu: "Ez dago tipifikazioa erabili beharrik banaketa normaleko problemak ebazteko." },
-        { cat: 1, correct: 1, es: "Hay reglas mnemotécnicas para reconocer el método de integración según la estructura de la función", eu: "Mnemoteknia-arauak daude integrazio-metodoa funtzioaren egituraren arabera ezagutzeko." },
-        { cat: 1, correct: 1, es: "Todo sistema de ecuaciones sigue el patrón de Rouché-Frobenius", eu: "Ekuazio-sistema guztiek Rouché-Frobeniusen patroia jarraitzen dute." },
-        { cat: 2, correct: 1, es: "Conviene seguir un procedimiento estructurado para discutir sistemas con parámetros", eu: "Parametrodun sistemak eztabaidatzeko prozedura egituratu bati jarraitzea komeni da." },
-        { cat: 2, correct: 0, es: "A la hora de buscar asíntotas no importa en qué orden las busquemos.", eu: "Asintotak bilatzeko orduan, ez du axola zein ordenatan bilatzen ditugun." },
-        { cat: 2, correct: 1, es: "¿Enseñas un algoritmo estándar (Adjunta/Det) para hallar la matriz inversa?", eu: "Alderantzizko matrizea aurkitzeko algoritmo estandar bat (Adjoint/Det) irakasten duzu?" },
-        { cat: 2, correct: 0, es: "Es importante hacer un árbol de decisión para determinar posiciones relativas entre rectas, planos y recta y plano ", eu: "Garrantzitsua da erabaki-zuhaitz bat egitea zuzenen, planoen eta zuzen eta planoen arteko erlaziozko posizioak zehazteko." },
-        { cat: 2, correct: 1, es: "Conviene aplicar el método correcto para resolver integrales racionales según el grado de los polinomios", eu: "Polinomioen mailaren arabera integral arrazionalak ebazteko metodo zuzena aplikatzea komeni da." },
-        { cat: 3, correct: 1, es: "Es fundamental entrenar la extracción de datos más allá de la narrativa del enunciado", eu: "Funtsezkoa da datuak ateratzea entrenatzea, enuntziatuaren narraziotik haratago." },
-        { cat: 3, correct: 0, es: "Para entender bien un problema de geometría analítica es fundamental representar el escenario 3D con detalle de los elementos en sus posiciones precisas.", eu: "Geometria analitikoko problema bat ondo ulertzeko, funtsezkoa da 3D agertokia irudikatzea, elementuen xehetasun eta posizio zehatzekin." },
-        { cat: 3, correct: 1, es: "Hay que traducir costes y superficies a ecuaciones algebraicas puras en los problemas de optimización.", eu: "Kostuak eta azalerak ekuazio algebraiko pugetara itzuli behar dira optimizazio-problemetan." },
-        { cat: 3, correct: 0, es: "Todas las letras representan variables en lenguaje algebraico.", eu: "Letra guztiek aldagaiak ordezkatzen dituzte hizkuntza algebraikoan." },
-        { cat: 4, correct: 0, es: "Es aceptable un valor de probabilidad negativo", eu: "Probabilitate-balio negatibo bat onargarria da." },
-        { cat: 4, correct: 1, es: "Podemos verificar puntos de corte sustituyendo en la función", eu: "Ebaki-puntuak egiazta ditzakegu funtzioan ordezkatuz." },
-        { cat: 4, correct: 0, es: "Se debe cuestionar la lógica de los resultados obtenidos", eu: "Lortutako emaitzen logika zalantzan jarri behar da" },
-        { cat: 4, correct: 1, es: "Es conveniente probar casos particulares para comprobar el resultado", eu: "Kasu partikularrak probatzea komeni da emaitza egiaztatzeko." },
-        { cat: 4, correct: 0, es: "Revisar las unidades finales (cm, m) es un detalle menor", eu: "Azken unitateak (cm, m) berrikustea xehetasun txikia da." }
+    const data = [
+        {
+            es: "Un problema de optimización no se puede abordar de forma global, sin separar función de restricciones, es necesario distinguir ambos conceptos.",
+            eu: "Optimizazio-problema bat ezin da modu globalean jorratu, funtzioa eta murrizketak bereizi gabe; beharrezkoa da bi kontzeptuak bereiztea.",
+            base_es: "Descomposición / Abstracción",
+            base_eu: "Deskonposizioa / Abstrakzioa",
+            exp_es: "En problemas como el de las tazas cilíndricas (Extraordinaria 2025), el alumno debe distinguir la función de optimización de las restricciones. Sin descomposición, el error más común es mezclar ambos conceptos.",
+            exp_eu: "Taza zilindrikoen ariketan bezala (2025 Ezohikoa), ikasleak optimizazio-funtzioa eta murrizketak bereizi behar ditu. Deskonposiziorik gabe, errorea ziurra da biak nahasteagatik."
+        },
+        {
+            es: "En un problema de geometría analítica es muy importante planificar los pasos intermedios previos a la obtención de lo que se pide.",
+            eu: "Geometria analitikoko problema batean, oso garrantzitsua da eskatzen dena lortu aurreko tarteko urratsak planifikatzea.",
+            base_es: "Descomposición / Algoritmia",
+            base_eu: "Deskonposizioa / Algoritmia",
+            exp_es: "Por ejemplo, hallar el simétrico de un punto requiere descomponer: 1. Recta perpendicular, 2. Punto de intersección, 3. Punto medio. Sin un plan (algoritmo previo), el alumno se pierde en la aritmética.",
+            exp_eu: "Adibidez, puntu baten simetrikoa aurkitzeko pausoak hauek dira: 1. Zuzena, 2. Ebaki-puntua, 3. Erdiko puntua. Planik gabe, ikaslea aritmetikan galtzen da."
+        },
+        {
+            es: "En un problema de cálculo de probabilidades es muy útil hacerse un diagrama previo.",
+            eu: "Probabilitateen kalkulu-problema batean, oso erabilgarria da prirun diagrama bat egitea.",
+            base_es: "Descomposición / Abstracción",
+            base_eu: "Deskonposizioa / Abstrakzioa",
+            exp_es: "Los problemas de probabilidad (ej. oncología/pediatría en 2025) tienen mucha carga narrativa. El diagrama de árbol es la desesperación visual necesaria para no omitir ramas o condiciones.",
+            exp_eu: "Probabilitate-arazoek (adib. 2025eko pediatria) karga narratibo handia dute. Zuhaitz-diagrama beharrezko deskonposizio bisuala da baldintzak ez ahazteko."
+        },
+        {
+            es: "En la discusión de sistemas de ecuaciones es importante respetar el orden en que analizamos los determinantes de las matrices del sistema.",
+            eu: "Ekuazio-sistemen eztabaidan, garrantzitsua da sistemako matrizeen determinanteak aztertzeko ordena errespetatzea.",
+            base_es: "Descomposición / Algoritmia",
+            base_eu: "Deskonposizioa / Algoritmia",
+            exp_es: "La discusión de sistemas es un proceso jerárquico.",
+            exp_eu: "Sistemen eztabaida prozesu hierarkikoa da, ordena logiko bat eskatzen duena."
+        },
+        {
+            es: "Para abordar el cálculo de áreas se deben identificar sistemáticamente los puntos de corte de la función con el eje de abscisas.",
+            eu: "Azalerak kalkulatzeko, funtzioak abzisa-ardatzarekin dituen ebaki-puntuak sistematikoki identifikatu behar dira.",
+            base_es: "Descomposición / Algoritmia",
+            base_eu: "Deskonposizioa / Algoritmia",
+            exp_es: "Una integral de área puede requerir varias integrales simples si hay cruces. Descomponer el intervalo según las raíces es crítico para no obtener áreas netas erróneas.",
+            exp_eu: "Azalera-integral batek integral sinple batzuk behar ditzake kurbak gurutzatzen badira. Tartea erroen arabera deskonposatzea kritikoa da."
+        },
+        {
+            es: "Para el cálculo de una potencia elevada de una matriz entrenamos al alumno en el reconocimiento de patrones o ciclos.",
+            eu: "Matrize baten berretura altu bat kalkulatzeko, patroiak edo zikloak identifikatzen trebatzen dugu ikaslea.",
+            base_es: "Identificación de patrones / Abstracción",
+            base_eu: "Patroi-identifikazioa / Abstrakzioa",
+            exp_es: "El PC busca eficiencia. Reconocer que A^n sigue una progresión o un ciclo (identidad, nula) evita cálculos infinitos y reduce el error humano operativo.",
+            exp_eu: "PK-k efizientzia bilatzen du. A^n-k ziklo bat duela onartzeak kalkulu amaigabeak eta giza akats operatiboak saihesten ditu."
+        },
+        {
+            es: "El concepto de 'tangente horizontal' siempre se corresponde con el patrón de derivada igual a cero.",
+            eu: "'Ukitzaile horizontala' kontzeptua beti bat dator deribatua zero izatearen patroiarekin.",
+            base_es: "Identificación de patrones / Abstracción",
+            base_eu: "Patroi-identifikazioa / Abstrakzioa",
+            exp_es: "Al ver 'tangente horizontal' o 'máximo/mínimo', el alumno debe ejecutar automáticamente el patrón f'(x)=0. Es un reconocimiento de señal visual en el enunciado.",
+            exp_eu: "Maximo edo minimo hitzak ikustean, ikasleak f'(x)=0 patroia automatikoki exekutatu behar du. Seinale bisual bat identifikatzea da."
+        },
+        {
+            es: "Enseñamos el proceso de tipificación para resolver los problemas de distribución normal.",
+            eu: "Tipifikazio-prozesua irakasten dugu banaketa normaleko problemak ebazteko.",
+            base_es: "Identificación de patrones / Abstracción",
+            base_eu: "Patroi-identifikazioa / Abstrakzioa",
+            exp_es: "La tipificación es un patrón universal. Identificar que toda N(μ, σ) se comporta igual bajo la transformación Z permite usar la misma herramienta (la tabla) siempre.",
+            exp_eu: "Tipifikazioa eredu unibertsala da. N(μ, σ) guztiak berdin eraldatzen direla jakiteak tresna bera (taula) beti erabiltzea ahalbidetzen du."
+        },
+        {
+            es: "Usamos reglas mnemotécnicas para reconocer el método de integración según la estructura de la función (por ejemplo, ALPES para integración por partes).",
+            eu: "Mnemoteknia-arauak erabiltzen ditugu integrazio-metodoa funtzioaren egituraren arabera ezagutzeko (adibidez, ALPES zati kideko integraziorako).",
+            base_es: "Identificación de patrones / Algoritmia",
+            base_eu: "Patroi-identifikazioa / Algoritmia",
+            exp_es: "El éxito en integrales (ej. 5A en 2025) depende de reconocer si la función es logarítmica, polinómica, etc., para aplicar el patrón de integración correcto.",
+            exp_eu: "Integralen arrakasta funtzioaren egitura (log, pol...) eta dagokion integrazio-patroia lotzean datza."
+        },
+        {
+            es: "Todo sistema de ecuaciones sigue el patrón de Rouché-Frobenius.",
+            eu: "Ekuazio-sistema guztiek Rouché-Frobeniusen patroia jarraitzen dute.",
+            base_es: "Identificación de patrones / Algoritmia",
+            base_eu: "Patroi-identifikazioa / Algoritmia",
+            exp_es: "Sin importar el tamaño del sistema, el patrón comparativo de rangos siempre da la respuesta de compatibilidad.",
+            exp_eu: "Sistemaren tamaina edozein dela ere, heinen arteko konparazio-patroiak beti ematen du bateragarritasunaren erantzuna."
+        },
+        {
+            es: "Es necesario seguir un procedimiento estructurado para discutir sistemas con parámetros.",
+            eu: "Parametrodun sistemak eztabaidatzeko, prozedura egituratu bati jarraitu behar zaio.",
+            base_es: "Algoritmia",
+            base_eu: "Algoritmia",
+            exp_es: "Un algoritmo (1. Hallar |A|, 2. Estudiar casos de |A|=0, 3. Comparar rangos) asegura que el alumno no olvide ningún escenario del parámetro.",
+            exp_eu: "Algoritmo batek ziurtatzen du ikasleak ez duela parametroaren inolako eszenatokirik ahazten."
+        },
+        {
+            es: "Al buscar asíntotas es importante el orden que seguimos para encontrarlas.",
+            eu: "Asintotak bilatzean, garrantzitsua da asintotok aurkitzeko jarraitzen dugun ordena.",
+            base_es: "Algoritmia",
+            base_eu: "Algoritmia",
+            exp_es: "Seguir un algoritmo (Vertical → Horizontal → Oblicua) ahorra tiempo: si hay horizontal, no hay oblicua. El orden lógico optimiza el examen.",
+            exp_eu: "Algoritmo bati jarraitzeak (B -> H -> Z) denbora aurrezten du (H badago, ez dago Z). Ordena logikoak azterketa optimizatzen du."
+        },
+        {
+            es: "Conviene enseñar el procedimiento estándar para el cálculo de la matriz inversa (por ejemplo, Traspuesta de Adjuntos dividido por el Determinante).",
+            eu: "Alderantzizko matrizea kalkulatzeko prozedura estandarra irakastea komeni da (adibidez, Adjuntuen transposatua determinantearekin zatitua).",
+            base_es: "Algoritmia",
+            base_eu: "Algoritmia",
+            exp_es: "Tener un algoritmo de pasos finitos reduce la carga cognitiva durante el estrés del examen frente a métodos menos estructurados.",
+            exp_eu: "Urrats finituko algoritmo bat izateak karga kognitiboa murrizten du estres egoeran."
+        },
+        {
+            es: "Hacemos un árbol de decisión para determinar posiciones relativas entre rectas, planos y recta y plano.",
+            eu: "Erabaki-zuhaitz bat egiten dugu zuzenen, planoen eta zuzenaren eta planoaren arteko posizio erlatiboak zehazteko.",
+            base_es: "Algoritmia / Descomposición",
+            base_eu: "Algoritmia / Deskonposizioa",
+            exp_es: "La geometría espacial es algorítmica. Un diagrama de flujo garantiza la clasificación correcta de elementos.",
+            exp_eu: "Geometria espaziala algoritmikoa da. Fluxu-diagrama batek elementuen sailkapen zuzena bermatzen du."
+        },
+        {
+            es: "Establecemos el método de resolución de integrales racionales según el grado de los polinomios.",
+            eu: "Polinomioen mailaren arabera finkatzen dugu integral arrazionalak ebazteko metodoa.",
+            base_es: "Algoritmia / Identificación de patrones",
+            base_eu: "Algoritmia / Patroi-identifikazioa",
+            exp_es: "El alumno aplica un algoritmo: ¿Grado numerador ≥ denominador? SÍ → Dividir; NO → Factorizar. Es una toma de decisiones algorítmica.",
+            exp_eu: "Ikasleak algoritmo bat aplikatzen du: Izendatzailearen maila txikiagoa bada, zatitu; bestela, faktorizatu."
+        },
+        {
+            es: "Entrenamos la extracción de datos más allá de la narrativa del enunciado.",
+            eu: "Datuak ateratzea entrenatzen dugu, enuntziatuaren narraziotik haratago.",
+            base_es: "Abstracción",
+            base_eu: "Abstrakzioa",
+            exp_es: "En el ejercicio de los marcos (2025), el nombre de la empresa es ruido. Lo esencial es abstraer la función de coste y la superficie.",
+            exp_eu: "2025eko markoen ariketan, enpresaren izena zarata da; funtsezkoa kostu-funtzioa eta azalera abstraitzea da."
+        },
+        {
+            es: "Enseñamos a abstraer elementos en geometría sin necesidad de una representación 3D precisa.",
+            eu: "Geometrian elementuak abstraitzen irakasten dugu, 3D irudikapen zehatzik behar izan gabe.",
+            base_es: "Abstracción",
+            base_eu: "Abstrakzioa",
+            exp_es: "Dibujar un plano en perspectiva no ayuda tanto como abstraer su vector normal. El exceso de detalle puede confundir la resolución.",
+            exp_eu: "Plano bat perspektiban marrazteak ez du laguntzen; bektore normalera abstraitzea nahikoa da."
+        },
+        {
+            es: "Traducimos costes y superficies a ecuaciones algebraicas puras en los problemas de optimización.",
+            eu: "Kostuak eta azalerak ekuazio algebraiko pugetara itzultzen ditugu optimizazio-problemetan.",
+            base_es: "Abstracción",
+            base_eu: "Abstrakzioa",
+            exp_es: "Pasar del lenguaje natural (12€/m) al simbólico (12x) es el corazón de la abstracción matemática.",
+            exp_eu: "Hizkuntza naturaletik sinbolikora igarotzea da abstrakzio matematikoaren muina."
+        },
+        {
+            es: "El alumno debe distinguir entre parámetros y variables en lenguaje algebraico.",
+            eu: "Ikasleak parametroak eta aldagaiak bereizi behar ditu hizkuntza algebraikoan.",
+            base_es: "Abstracción",
+            base_eu: "Abstrakzioa",
+            exp_es: "El alumno debe distinguir parámetros de variables. Confundir un parámetro con una variable es un error de abstracción.",
+            exp_eu: "Parametro bat eta aldagaia nahastea abstrakzio akatsa da. Rolak bereizi behar dira."
+        },
+        {
+            es: "Entrenamos a los alumnos a que hagan verificaciones de los resultados obtenidos (por ejemplo, puntos de corte).",
+            eu: "Ikasleak lortutako emaitzak egiaztatzera trebatzen ditugu (adibidez, ebaki-puntuak).",
+            base_es: "Verificación",
+            base_eu: "Egiaztapena",
+            exp_es: "Es la fase de testeo de la solución. Si el punto no cumple la ecuación de la función, el proceso de cálculo falló en algún punto.",
+            exp_eu: "Soluzioaren testatze-fasea da. Puntuak ekuazioa betetzen ez badu, kalkulu-prozesuak huts egin du."
+        },
+        {
+            es: "Resultados incoherentes en los problemas (longitudes negativas, probabilidades imposibles, etc.) deben llamar la atención del alumno.",
+            eu: "Problemetan lortutako emaitza inkoherenteek (luzera negatiboak, probabilitate ezinezkoak, etab.) ikaslearen arreta eman behar dute.",
+            base_es: "Verificación",
+            base_eu: "Egiaztapena",
+            exp_es: "El PC incluye la depuración (debugging). Si el resultado viola una regla fundamental indican un fallo en la lógica del planteamiento o en la operativa.",
+            exp_eu: "PK-k arazketa (debugging) dakar. Emaitza ilogikoak planteamenduaren edo operazioen akatsa adierazten du."
+        },
+        {
+            es: "En caso de duda, es conveniente probar casos particulares para comprobar el resultado.",
+            eu: "Zalantzarik izanez gero, kasu partikularrak probatzea komeni da emaitza egiaztatzeko.",
+            base_es: "Verificación",
+            base_eu: "Egiaztapena",
+            exp_es: "Es una técnica de casos de prueba (test cases). Podemos probar puntos de intervalos o valores de parámetros para verificar nuestra solución.",
+            exp_eu: "Proba-kasuen teknika da (test cases). Balio zehatzak probatzeak soluzio orokorra balioztatzen du."
+        },
+        {
+            es: "Debe ser costumbre revisar la coherencia en las unidades finales (cm, m) en las soluciones de los problemas.",
+            eu: "Ohitura izan behar da problemen soluzioetan azken unitateen (cm, m) koherentzia berrikustea.",
+            base_es: "Verificación",
+            base_eu: "Egiaztapena",
+            exp_es: "El error de unidades es un fallo de consistencia de datos. En el ejercicio de las tazas de 2025, confundir cm3 con m3 invalida la respuesta técnica.",
+            exp_eu: "Unitate akatsa datuen koherentzia falla da. cm3 eta m3 nahasteak erantzun tekniko osoa baliogabetzen du."
+        }
     ];
-
-    const shuffledQuestions = questions.map((q, i) => ({...q, id: i}))
-                                      .sort(() => Math.random() - 0.5);
-
-    function render() {
-        const container = document.getElementById('quizContainer');
-        container.innerHTML = '';
-        const langData = currentLang === 'eu' ? {y:"BAI", n:"EZ"} : {y:"SÍ", n:"NO"};
-        
-        shuffledQuestions.forEach((q, i) => {
-            const card = document.createElement('div');
-            card.className = 'question-card';
-            card.innerHTML = `
-                <div style="margin-bottom:10px; font-weight:600;">${i+1}. ${q[currentLang]}</div>
-                <div class="options">
-                    <label><input type="radio" name="q${i}" value="1" required> ${langData.y}</label>
-                    <label><input type="radio" name="q${i}" value="0"> ${langData.n}</label>
-                </div>
-            `;
-            container.appendChild(card);
-        });
-    }
 
     function toggleLang() {
         currentLang = currentLang === 'eu' ? 'es' : 'eu';
-        document.getElementById('title').innerText = currentLang === 'eu' ? "Irakaskuntza PK-n" : "Docencia en PC";
-        document.getElementById('intro').innerText = currentLang === 'eu' ? "Ebaluatu zure eguneroko irakaskuntza-praktika EBAUko azterketetara bideratuta:" : "Evalúa tu práctica docente diaria enfocada a los exámenes de la EBAU:";
-        document.getElementById('submitBtn').innerText = currentLang === 'eu' ? "Emaitzak kalkulatu" : "Calcular resultados";
-        document.getElementById('langBtn').innerText = currentLang === 'eu' ? "ESPAÑOL" : "EUSKERA";
-        render();
+        document.getElementById('lang-btn').innerText = currentLang === 'eu' ? 'ESPAÑOL' : 'EUSKERA';
+        document.getElementById('pdf-btn').innerText = currentLang === 'eu' ? 'PDF-ra esportatu' : 'Exportar a PDF';
+        document.getElementById('title').innerText = currentLang === 'eu' ? 'Irakaskuntza Estrategiak eta PK Checklist-a' : 'Lista de Verificación: Estrategias Docentes y PC';
+        document.getElementById('th-afirm').innerText = currentLang === 'eu' ? 'Enuntziatua' : 'Enunciado';
+        document.getElementById('th-expl').innerText = currentLang === 'eu' ? 'Arrazoitzea (PK)' : 'Justificación (PC)';
+        renderTable();
     }
 
-    function processResults() {
-        const form = document.getElementById('quizForm');
-        const formData = new FormData(form);
-        const resultsByCat = [0, 0, 0, 0, 0];
-        const countByCat = [0, 0, 0, 0, 0];
-        let totalScore = 0;
-        let answeredCount = 0;
-
-        shuffledQuestions.forEach((q, i) => {
-            const val = formData.get(`q${i}`);
-            if (val !== null) {
-                answeredCount++;
-                countByCat[q.cat]++;
-                if (parseInt(val) === q.correct) {
-                    resultsByCat[q.cat]++;
-                    totalScore++;
-                }
-            }
+    function renderTable() {
+        const body = document.getElementById('table-body');
+        const oldState = Array.from(body.querySelectorAll('tr')).map(tr => {
+            const radio = tr.querySelector('input[type="radio"]:checked');
+            return radio ? radio.value : null;
         });
 
-        if (answeredCount < questions.length) {
-            alert(currentLang === 'eu' ? "Mesedez, erantzun galdera guztiak." : "Por favor, responde todas las preguntas.");
-            return;
-        }
+        body.innerHTML = '';
+        data.forEach((item, i) => {
+            const tr = document.createElement('tr');
+            tr.id = `row-${i}`;
+            const val = oldState[i];
+            if(val === 'si') tr.className = 'row-yes';
+            if(val === 'no') tr.className = 'row-no';
 
-        document.getElementById('quizForm').style.display = 'none';
-        document.getElementById('results').style.display = 'block';
-        document.getElementById('globalScore').innerText = Math.round((totalScore/questions.length)*100);
-        
-        const pillarGrid = document.getElementById('pillarResults');
-        pillarGrid.innerHTML = '';
-        const catLabels = currentLang === 'eu' ? CATS_EU : CATS_ES;
-        
-        resultsByCat.forEach((val, i) => {
-            const pct = Math.round((val / countByCat[i]) * 100);
-            const pCard = document.createElement('div');
-            pCard.className = 'pillar-card';
-            pCard.innerHTML = `
-                <div style="font-size:0.8rem; font-weight:bold; text-transform:uppercase">${catLabels[i]}</div>
-                <div style="font-size:1.5rem; font-weight:bold; margin:5px 0">${pct}%</div>
-                <div class="pillar-bar-bg"><div class="pillar-bar-fill" style="width:${pct}%"></div></div>
+            tr.innerHTML = `
+                <td>${currentLang === 'eu' ? item.eu : item.es}</td>
+                <td style="text-align:center"><input type="radio" name="q${i}" value="si" ${val==='si'?'checked':''} onchange="updateRow(${i}, 'si')"></td>
+                <td style="text-align:center"><input type="radio" name="q${i}" value="no" ${val==='no'?'checked':''} onchange="updateRow(${i}, 'no')"></td>
+                <td class="explanation-cell">
+                    <div id="exp-${i}" class="${val ? '' : 'hidden'}">
+                        <span class="base-label">${currentLang === 'eu' ? item.base_eu : item.base_es}</span>
+                        ${currentLang === 'eu' ? item.exp_eu : item.exp_es}
+                    </div>
+                </td>
             `;
-            pillarGrid.appendChild(pCard);
+            body.appendChild(tr);
         });
-        window.scrollTo(0,0);
+        updateProgress();
     }
-    render();
+
+    function updateRow(index, val) {
+        document.getElementById(`row-${index}`).className = val === 'si' ? 'row-yes' : 'row-no';
+        document.getElementById(`exp-${index}`).classList.remove('hidden');
+        updateProgress();
+    }
+
+    function updateProgress() {
+        const siCount = document.querySelectorAll('input[type="radio"][value="si"]:checked').length;
+        document.getElementById('progress-bar').style.width = (siCount / data.length) * 100 + '%';
+    }
+
+    function exportToPDF() {
+        const element = document.getElementById('capture-area');
+        const opt = {
+            margin: 10,
+            filename: 'Checklist_Estrategias_Docentes_PK.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, logging: false },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Ejecutar exportación
+        html2pdf().set(opt).from(element).save();
+    }
+
+    window.onload = renderTable;
 </script>
 </body>
 </html>
