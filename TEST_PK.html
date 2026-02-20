@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="eu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PK Galdetegia / Test Pensamiento Computacional</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #64748b;
+            --success: #059669;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            max-width: 850px;
+            width: 100%;
+            background: var(--card);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        .lang-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .question-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            transition: transform 0.2s;
+        }
+        .question-card:hover { border-color: var(--primary); }
+        .options {
+            display: flex;
+            gap: 30px;
+            margin-top: 10px;
+        }
+        label { cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 500; }
+        .submit-btn {
+            width: 100%;
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 18px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        #results {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        .pillar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 25px;
+        }
+        .pillar-card {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .pillar-bar-bg {
+            height: 8px;
+            background: #cbd5e1;
+            border-radius: 4px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .pillar-bar-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 1s;
+        }
+        .score-total {
+            text-align: center;
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: var(--success);
+            margin: 20px 0;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1 id="title">Irakaskuntza PK-n</h1>
+        <button class="lang-btn" onclick="toggleLang()" id="langBtn">ESPAÑOL</button>
+    </div>
+    
+    <p id="intro">Ebaluatu zure eguneroko irakaskuntza-praktika EBAUko azterketetara bideratuta:</p>
+
+    <form id="quizForm">
+        <div id="quizContainer"></div>
+        <button type="button" class="submit-btn" onclick="processResults()" id="submitBtn">Emaitzak kalkulatu</button>
+    </form>
+
+    <div id="results">
+        <h2 id="resHeading">Zure diagnostikoa:</h2>
+        <div class="score-total"><span id="globalScore">0</span>%</div>
+        <p id="resDesc" style="text-align:center"></p>
+        
+        <div class="pillar-grid" id="pillarResults"></div>
+        
+        <button class="submit-btn" style="background: var(--secondary); margin-top: 40px;" onclick="location.reload()">Berrekin / Reiniciar</button>
+    </div>
+</div>
+
+<script>
+    let currentLang = 'eu';
+    const CATS_ES = ['Descomposición', 'Identificación de patrones', 'Algoritmia', 'Abstracción', 'Verificación'];
+    const CATS_EU = ['Deskonposizioa', 'Patroi-identifikazioa', 'Algoritmia', 'Abstrakzioa', 'Egiaztapena'];
+
+    const questions = [
+        { cat: 0, correct: 0, es: "La optimización se puede abordar de forma global, sin separar función de restricciones.", eu: "Optimizazioa modu globalean lan daiteke, funtzioa eta murrizketak bereizi gabe." },
+        { cat: 0, correct: 1, es: "Hay que planificar los pasos intermedios en un problema de geometría analítica.", eu: "Geometria analitikoko problema batean tarteko urratsak planifikatu behar dira." },
+        { cat: 0, correct: 0, es: "No hace falta hacerse un diagrama para calcular probabilidades, puede hacerse directamente.", eu: "Ez dago diagrama bat egin beharrik probabilitateak kalkulatzeko, zuzenean egin daiteke." },
+        { cat: 0, correct: 1, es: "En la discusión de sistemas de ecuaciones, hay que analizar primero el determinante de la matriz principal y luego el de la ampliada.", eu: "Ekuazio-sistemen eztabaidan, lehenik matrize nagusiaren determinantea aztertu behar da eta gero zabalduarena." },
+        { cat: 0, correct: 1, es: "Para abordar el cálculo de áreas se deben identificar sistemáticamente los puntos de corte de la función con el eje de abscisas.", eu: "Azalerak kalkulatzeko, funtzioak abzisa-ardatzarekin dituen ebaki-puntuak sistematikoki identifikatu behar dira." },
+        { cat: 1, correct: 0, es: "Puede ser una buena estrategia calcular A2025 multiplicando la matriz por sí misma sucesivamente las veces que haga falta.", eu: "Estrategia ona izan daiteke A2025 kalkulatzea matrizea bere buruarekin biderkatuz behar adina aldiz." },
+        { cat: 1, correct: 1, es: "El concepto de 'tangente horizontal' siempre se corresponde con el patrón de derivada igual a cero", eu: "'Ukitzaile horizontala' kontzeptua beti bat dator deribatua zero izatearen patroiarekin." },
+        { cat: 1, correct: 0, es: "No hace falta utilizar la tipificación para resolver los problemas de distribución normal", eu: "Ez dago tipifikazioa erabili beharrik banaketa normaleko problemak ebazteko." },
+        { cat: 1, correct: 1, es: "Hay reglas mnemotécnicas para reconocer el método de integración según la estructura de la función", eu: "Mnemoteknia-arauak daude integrazio-metodoa funtzioaren egituraren arabera ezagutzeko." },
+        { cat: 1, correct: 1, es: "Todo sistema de ecuaciones sigue el patrón de Rouché-Frobenius", eu: "Ekuazio-sistema guztiek Rouché-Frobeniusen patroia jarraitzen dute." },
+        { cat: 2, correct: 1, es: "Conviene seguir un procedimiento estructurado para discutir sistemas con parámetros", eu: "Parametrodun sistemak eztabaidatzeko prozedura egituratu bati jarraitzea komeni da." },
+        { cat: 2, correct: 0, es: "A la hora de buscar asíntotas no importa en qué orden las busquemos.", eu: "Asintotak bilatzeko orduan, ez du axola zein ordenatan bilatzen ditugun." },
+        { cat: 2, correct: 1, es: "¿Enseñas un algoritmo estándar (Adjunta/Det) para hallar la matriz inversa?", eu: "Alderantzizko matrizea aurkitzeko algoritmo estandar bat (Adjoint/Det) irakasten duzu?" },
+        { cat: 2, correct: 0, es: "Es importante hacer un árbol de decisión para determinar posiciones relativas entre rectas, planos y recta y plano ", eu: "Garrantzitsua da erabaki-zuhaitz bat egitea zuzenen, planoen eta zuzen eta planoen arteko erlaziozko posizioak zehazteko." },
+        { cat: 2, correct: 1, es: "Conviene aplicar el método correcto para resolver integrales racionales según el grado de los polinomios", eu: "Polinomioen mailaren arabera integral arrazionalak ebazteko metodo zuzena aplikatzea komeni da." },
+        { cat: 3, correct: 1, es: "Es fundamental entrenar la extracción de datos más allá de la narrativa del enunciado", eu: "Funtsezkoa da datuak ateratzea entrenatzea, enuntziatuaren narraziotik haratago." },
+        { cat: 3, correct: 0, es: "Para entender bien un problema de geometría analítica es fundamental representar el escenario 3D con detalle de los elementos en sus posiciones precisas.", eu: "Geometria analitikoko problema bat ondo ulertzeko, funtsezkoa da 3D agertokia irudikatzea, elementuen xehetasun eta posizio zehatzekin." },
+        { cat: 3, correct: 1, es: "Hay que traducir costes y superficies a ecuaciones algebraicas puras en los problemas de optimización.", eu: "Kostuak eta azalerak ekuazio algebraiko pugetara itzuli behar dira optimizazio-problemetan." },
+        { cat: 3, correct: 0, es: "Todas las letras representan variables en lenguaje algebraico.", eu: "Letra guztiek aldagaiak ordezkatzen dituzte hizkuntza algebraikoan." },
+        { cat: 4, correct: 0, es: "Es aceptable un valor de probabilidad negativo", eu: "Probabilitate-balio negatibo bat onargarria da." },
+        { cat: 4, correct: 1, es: "Podemos verificar puntos de corte sustituyendo en la función", eu: "Ebaki-puntuak egiazta ditzakegu funtzioan ordezkatuz." },
+        { cat: 4, correct: 0, es: "Se debe cuestionar la lógica de los resultados obtenidos", eu: "Lortutako emaitzen logika zalantzan jarri behar da" },
+        { cat: 4, correct: 1, es: "Es conveniente probar casos particulares para comprobar el resultado", eu: "Kasu partikularrak probatzea komeni da emaitza egiaztatzeko." },
+        { cat: 4, correct: 0, es: "Revisar las unidades finales (cm, m) es un detalle menor", eu: "Azken unitateak (cm, m) berrikustea xehetasun txikia da." }
+    ];
+
+    const shuffledQuestions = questions.map((q, i) => ({...q, id: i}))
+                                      .sort(() => Math.random() - 0.5);
+
+    function render() {
+        const container = document.getElementById('quizContainer');
+        container.innerHTML = '';
+        const langData = currentLang === 'eu' ? {y:"BAI", n:"EZ"} : {y:"SÍ", n:"NO"};
+        
+        shuffledQuestions.forEach((q, i) => {
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            card.innerHTML = `
+                <div style="margin-bottom:10px; font-weight:600;">${i+1}. ${q[currentLang]}</div>
+                <div class="options">
+                    <label><input type="radio" name="q${i}" value="1" required> ${langData.y}</label>
+                    <label><input type="radio" name="q${i}" value="0"> ${langData.n}</label>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function toggleLang() {
+        currentLang = currentLang === 'eu' ? 'es' : 'eu';
+        document.getElementById('title').innerText = currentLang === 'eu' ? "Irakaskuntza PK-n" : "Docencia en PC";
+        document.getElementById('intro').innerText = currentLang === 'eu' ? "Ebaluatu zure eguneroko irakaskuntza-praktika EBAUko azterketetara bideratuta:" : "Evalúa tu práctica docente diaria enfocada a los exámenes de la EBAU:";
+        document.getElementById('submitBtn').innerText = currentLang === 'eu' ? "Emaitzak kalkulatu" : "Calcular resultados";
+        document.getElementById('langBtn').innerText = currentLang === 'eu' ? "ESPAÑOL" : "EUSKERA";
+        render();
+    }
+
+    function processResults() {
+        const form = document.getElementById('quizForm');
+        const formData = new FormData(form);
+        const resultsByCat = [0, 0, 0, 0, 0];
+        const countByCat = [0, 0, 0, 0, 0];
+        let totalScore = 0;
+        let answeredCount = 0;
+
+        shuffledQuestions.forEach((q, i) => {
+            const val = formData.get(`q${i}`);
+            if (val !== null) {
+                answeredCount++;
+                countByCat[q.cat]++;
+                if (parseInt(val) === q.correct) {
+                    resultsByCat[q.cat]++;
+                    totalScore++;
+                }
+            }
+        });
+
+        if (answeredCount < questions.length) {
+            alert(currentLang === 'eu' ? "Mesedez, erantzun galdera guztiak." : "Por favor, responde todas las preguntas.");
+            return;
+        }
+
+        document.getElementById('quizForm').style.display = 'none';
+        document.getElementById('results').style.display = 'block';
+        document.getElementById('globalScore').innerText = Math.round((totalScore/questions.length)*100);
+        
+        const pillarGrid = document.getElementById('pillarResults');
+        pillarGrid.innerHTML = '';
+        const catLabels = currentLang === 'eu' ? CATS_EU : CATS_ES;
+        
+        resultsByCat.forEach((val, i) => {
+            const pct = Math.round((val / countByCat[i]) * 100);
+            const pCard = document.createElement('div');
+            pCard.className = 'pillar-card';
+            pCard.innerHTML = `
+                <div style="font-size:0.8rem; font-weight:bold; text-transform:uppercase">${catLabels[i]}</div>
+                <div style="font-size:1.5rem; font-weight:bold; margin:5px 0">${pct}%</div>
+                <div class="pillar-bar-bg"><div class="pillar-bar-fill" style="width:${pct}%"></div></div>
+            `;
+            pillarGrid.appendChild(pCard);
+        });
+        window.scrollTo(0,0);
+    }
+    render();
+</script>
+</body>
+</html>
