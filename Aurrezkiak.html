@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="eu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PISA Aurrezki Simulagailua / Simulador de Ahorro</title>
+    <style>
+        :root {
+            --pisa-blue: #004a99;
+            --pisa-light-blue: #eef4fb;
+            --pisa-gray: #f4f4f4;
+            --pisa-border: #cccccc;
+            --text-color: #333;
+            --accent-color: #d9534f;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            color: var(--text-color);
+        }
+
+        /* Navbar & Language Switch */
+        .header {
+            background: var(--pisa-blue);
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .lang-btn {
+            background: white;
+            color: var(--pisa-blue);
+            border: none;
+            padding: 5px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* Main Layout */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .info-panel {
+            flex: 1;
+            padding: 25px;
+            border-right: 2px solid var(--pisa-border);
+            background: white;
+            overflow-y: auto;
+        }
+
+        .simulator-panel {
+            flex: 1.5;
+            padding: 25px;
+            background: var(--pisa-gray);
+            overflow-y: auto;
+        }
+
+        /* Form styling */
+        .config-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        select, input {
+            padding: 10px;
+            border: 1px solid var(--pisa-border);
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        input:disabled {
+            background-color: #e9ecef;
+            color: var(--pisa-blue);
+            font-weight: bold;
+            border: 2px dashed var(--pisa-blue);
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 15px;
+        }
+
+        button.action {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .btn-simulate { background: var(--pisa-blue); color: white; }
+        .btn-reset { background: #666; color: white; }
+        .btn-simulate:hover { opacity: 0.9; }
+
+        /* History Table */
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #000;
+            color: white;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        tr:nth-child(even) { background: #f9f9f9; }
+        .highlight-cell { color: var(--pisa-blue); font-weight: bold; }
+
+        .pisa-note {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <span id="title">PISA: Aurrezkiak</span>
+    <button class="lang-btn" onclick="toggleLanguage()" id="langBtn">ES</button>
+</div>
+
+<div class="main-container">
+    <div class="info-panel">
+        <h2 id="unitTitle">Aurrezki Unitatea</h2>
+        <p id="instruction1">Aukeratu simulatu nahi duzun parametroa. Gainerako balioak finkatu eta sakatu "Simulatu".</p>
+        <div style="background: var(--pisa-light-blue); padding: 15px; border-left: 5px solid var(--pisa-blue);">
+            <p id="instruction2">Tresna honek aurrezki-plan baten aldagaien arteko harremana aztertzen lagunduko dizu.</p>
+        </div>
+    </div>
+
+    <div class="simulator-panel">
+        <div class="config-box">
+            <div class="input-group">
+                <label id="lblTarget">Zer kalkulatu nahi duzu?</label>
+                <select id="targetParam" onchange="updateUI()">
+                    <option value="total" id="optTotal">Guztira aurreztutakoa</option>
+                    <option value="months" id="optMonths">Epea (hilabeteak)</option>
+                    <option value="monthly" id="optMonthly">Hileko gordailua</option>
+                    <option value="rate" id="optRate">Urteko interes-tasa</option>
+                </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="input-group">
+                    <label id="lblMonths">Epea (Hilabeteak)</label>
+                    <input type="number" id="inMonths" value="12">
+                </div>
+                <div class="input-group">
+                    <label id="lblMonthly">Hileko gordailua (€)</label>
+                    <input type="number" id="inMonthly" value="50">
+                </div>
+                <div class="input-group">
+                    <label id="lblRate">Urteko Interesa (%)</label>
+                    <input type="number" id="inRate" value="2" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label id="lblTotal">Guztira aurreztutakoa (€)</label>
+                    <input type="number" id="inTotal" value="0">
+                </div>
+            </div>
+
+            <div class="btn-row">
+                <button class="action btn-reset" id="btnReset" onclick="resetTable()">Garbitu Taula</button>
+                <button class="action btn-simulate" id="btnSim" onclick="calculate()">Simulatu</button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th id="thMonths">Hilabeteak</th>
+                        <th id="thMonthly">Gordailua</th>
+                        <th id="thRate">Interesa (%)</th>
+                        <th id="thTotal">Guztira</th>
+                    </tr>
+                </thead>
+                <tbody id="historyBody">
+                    </tbody>
+            </table>
+        </div>
+        <p class="pisa-note" id="pisaNote">* Interesa hilero kalkulatzen da saldoaren gainean.</p>
+    </div>
+</div>
+
+<script>
+    let currentLang = 'eu';
+    let simulationCount = 0;
+
+    const i18n = {
+        eu: {
+            title: "PISA: Aurrezkiak",
+            unitTitle: "Aurrezki Unitatea",
+            instruction1: "Aukeratu kalkulatu nahi duzun parametroa. Gainerako balioak finkatu eta sakatu 'Simulatu'.",
+            instruction2: "Tresna honek aurrezki-plan baten aldagaien arteko harremana aztertzen lagunduko dizu.",
+            lblTarget: "Zer kalkulatu nahi duzu?",
+            optTotal: "Guztira aurreztutakoa",
+            optMonths: "Epea (hilabeteak)",
+            optMonthly: "Hileko gordailua",
+            optRate: "Urteko interes-tasa",
+            lblMonths: "Epea (Hilabeteak)",
+            lblMonthly: "Hileko gordailua (€)",
+            lblRate: "Urteko Interesa (%)",
+            lblTotal: "Guztira aurreztutakoa (€)",
+            btnReset: "Garbitu Taula",
+            btnSim: "Simulatu",
+            thMonths: "Hilabeteak",
+            thMonthly: "Gordailua",
+            thRate: "Interesa",
+            thTotal: "Guztira",
+            langBtn: "ES",
+            pisaNote: "* Interesa hilero kalkulatzen da saldoaren gainean."
+        },
+        es: {
+            title: "PISA: Ahorros",
+            unitTitle: "Unidad de Ahorro",
+            instruction1: "Elige qué parámetro deseas calcular. Fija el resto de valores y pulsa 'Simular'.",
+            instruction2: "Esta herramienta te permite explorar la relación entre las variables de un plan de ahorro.",
+            lblTarget: "¿Qué deseas calcular?",
+            optTotal: "Total ahorrado",
+            optMonths: "Periodo (meses)",
+            optMonthly: "Depósito mensual",
+            optRate: "Tasa de interés anual",
+            lblMonths: "Periodo (Meses)",
+            lblMonthly: "Depósito mensual (€)",
+            lblRate: "Interés Anual (%)",
+            lblTotal: "Total ahorrado (€)",
+            btnReset: "Limpiar Tabla",
+            btnSim: "Simular",
+            thMonths: "Meses",
+            thMonthly: "Depósito",
+            thRate: "Interés",
+            thTotal: "Total",
+            langBtn: "EU",
+            pisaNote: "* El interés se calcula mensualmente sobre el saldo."
+        }
+    };
+
+    function toggleLanguage() {
+        currentLang = currentLang === 'eu' ? 'es' : 'eu';
+        const data = i18n[currentLang];
+        
+        document.getElementById('title').innerText = data.title;
+        document.getElementById('unitTitle').innerText = data.unitTitle;
+        document.getElementById('instruction1').innerText = data.instruction1;
+        document.getElementById('instruction2').innerText = data.instruction2;
+        document.getElementById('lblTarget').innerText = data.lblTarget;
+        document.getElementById('optTotal').innerText = data.optTotal;
+        document.getElementById('optMonths').innerText = data.optMonths;
+        document.getElementById('optMonthly').innerText = data.optMonthly;
+        document.getElementById('optRate').innerText = data.optRate;
+        document.getElementById('lblMonths').innerText = data.lblMonths;
+        document.getElementById('lblMonthly').innerText = data.lblMonthly;
+        document.getElementById('lblRate').innerText = data.lblRate;
+        document.getElementById('lblTotal').innerText = data.lblTotal;
+        document.getElementById('btnReset').innerText = data.btnReset;
+        document.getElementById('btnSim').innerText = data.btnSim;
+        document.getElementById('thMonths').innerText = data.thMonths;
+        document.getElementById('thMonthly').innerText = data.thMonthly;
+        document.getElementById('thRate').innerText = data.thRate;
+        document.getElementById('thTotal').innerText = data.thTotal;
+        document.getElementById('langBtn').innerText = data.langBtn;
+        document.getElementById('pisaNote').innerText = data.pisaNote;
+    }
+
+    function updateUI() {
+        const target = document.getElementById('targetParam').value;
+        const inputs = ['inMonths', 'inMonthly', 'inRate', 'inTotal'];
+        
+        inputs.forEach(id => {
+            const input = document.getElementById(id);
+            input.disabled = false;
+        });
+
+        if(target === 'total') document.getElementById('inTotal').disabled = true;
+        if(target === 'months') document.getElementById('inMonths').disabled = true;
+        if(target === 'monthly') document.getElementById('inMonthly').disabled = true;
+        if(target === 'rate') document.getElementById('inRate').disabled = true;
+    }
+
+    function calculate() {
+        const target = document.getElementById('targetParam').value;
+        let n = parseFloat(document.getElementById('inMonths').value);
+        let p = parseFloat(document.getElementById('inMonthly').value);
+        let r_ann = parseFloat(document.getElementById('inRate').value);
+        let fv = parseFloat(document.getElementById('inTotal').value);
+        
+        let r = (r_ann / 100) / 12; // Mensual
+
+        if (target === 'total') {
+            // Formula: FV = P * (((1 + r)^n - 1) / r)
+            if (r === 0) fv = p * n;
+            else fv = p * (Math.pow(1 + r, n) - 1) / r;
+            document.getElementById('inTotal').value = fv.toFixed(2);
+        } 
+        else if (target === 'monthly') {
+            if (r === 0) p = fv / n;
+            else p = (fv * r) / (Math.pow(1 + r, n) - 1);
+            document.getElementById('inMonthly').value = p.toFixed(2);
+        }
+        else if (target === 'months') {
+            if (r === 0) n = fv / p;
+            else n = Math.log((fv * r / p) + 1) / Math.log(1 + r);
+            document.getElementById('inMonths').value = Math.ceil(n);
+            n = Math.ceil(n);
+        }
+        else if (target === 'rate') {
+            // Iterativo (Newton-Raphson simplificado)
+            r = 0.001; 
+            for(let i=0; i<20; i++) {
+                let f = p * (Math.pow(1 + r, n) - 1) / r - fv;
+                let df = p * (n * r * Math.pow(1 + r, n - 1) - (Math.pow(1 + r, n) - 1)) / (r * r);
+                r = r - f / df;
+            }
+            r_ann = r * 12 * 100;
+            document.getElementById('inRate').value = r_ann.toFixed(2);
+        }
+
+        addToTable(n, p, r_ann, fv, target);
+    }
+
+    function addToTable(n, p, r, fv, target) {
+        simulationCount++;
+        const tbody = document.getElementById('historyBody');
+        const row = document.createElement('tr');
+        
+        row.innerHTML = `
+            <td>${simulationCount}</td>
+            <td class="${target === 'months' ? 'highlight-cell' : ''}">${n}</td>
+            <td class="${target === 'monthly' ? 'highlight-cell' : ''}">${p.toFixed(2)} €</td>
+            <td class="${target === 'rate' ? 'highlight-cell' : ''}">${r.toFixed(2)}%</td>
+            <td class="${target === 'total' ? 'highlight-cell' : ''}">${fv.toFixed(2)} €</td>
+        `;
+        tbody.prepend(row); // Las nuevas arriba
+    }
+
+    function resetTable() {
+        document.getElementById('historyBody').innerHTML = '';
+        simulationCount = 0;
+    }
+
+    // Init
+    updateUI();
+</script>
+
+</body>
+</html>
