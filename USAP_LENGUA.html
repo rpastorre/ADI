@@ -1,0 +1,376 @@
+
+<!DOCTYPE html>
+<html lang="eu">
+<head>
+    <meta charset="UTF-8">
+    <title>PK Checklist / Lista de Verificación PC</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --bg: #f4f7f6;
+            --white: #ffffff;
+            --yes-bg: rgba(200, 230, 201, 0.4);
+            --no-bg: rgba(255, 205, 210, 0.4);
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: var(--white);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            padding: 15px 0;
+        }
+        .header-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        h1 { margin: 0; color: var(--primary); font-size: 1.3rem; flex-grow: 1; }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background: #4caf50;
+            transition: width 0.4s ease;
+        }
+
+        main {
+            margin-top: 130px;
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: var(--white);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background-color: var(--primary);
+            color: var(--white);
+            padding: 12px;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .lang-btn, .pdf-btn {
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+        .lang-btn { background: var(--accent); }
+        .pdf-btn { background: #e67e22; }
+
+        .row-yes { background-color: var(--yes-bg) !important; }
+        .row-no { background-color: var(--no-bg) !important; }
+        
+        .explanation-cell { font-size: 0.85rem; color: #444; width: 35%; }
+        .base-label {
+            display: block;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 4px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+        }
+        .hidden { display: none; }
+
+        /* Ajustes para impresión/PDF */
+        @media print {
+            header { position: static; box-shadow: none; }
+            main { margin-top: 0; overflow: visible; }
+            .btn-group { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-content">
+        <div class="top-bar">
+            <h1 id="title">Irakaskuntza Estrategiak eta PK Checklist-a</h1>
+            <div class="btn-group">
+                <button class="pdf-btn" id="pdf-btn" onclick="exportToPDF()">PDF-ra esportatu</button>
+                <button class="lang-btn" id="lang-btn" onclick="toggleLang()">ESPAÑOL</button>
+            </div>
+        </div>
+        <div class="progress-container">
+            <div id="progress-bar"></div>
+        </div>
+    </div>
+</header>
+
+<main id="capture-area">
+    <div class="container">
+        <table>
+            <thead>
+                <tr>
+                    <th id="th-afirm" style="width: 50%;">Enuntziatua</th>
+                    <th style="width: 50px;">BAI</th>
+                    <th style="width: 50px;">EZ</th>
+                    <th id="th-expl">Arrazoitzea (PK)</th>
+                </tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+        </table>
+    </div>
+</main>
+
+<script>
+    let currentLang = 'eu';
+    const data = [
+        {
+             es: "Para determinar el tema principal del texto, se deben descartar datos irrelevantes y ejemplos específicos, centrándose en la tesis fundamental.",
+            eu: "Testuaren gai nagusia zehazteko, alferreko datu eta adibide zehatzak iragazi behar dira, funtsezko tesiari helduz.",
+            base_es: "Abstracción / Reconocimiento de patrones",
+            base_eu: "Abstrakzioa / Patroien identifikazioa",
+            exp_es: "El alumnado debe filtrar información secundaria (ej. el 'cometa Halley' o anécdotas de fútbol ) para aislar la tesis.",
+            exp_eu: "Ikasleak informazio sekundarioa (adibidez, 'Halley kometa' edo futbolaren inguruko anekdotak ) iragazi behar du tesi nagusia isolatzeko."
+        },
+        {
+            es: "Para realizar el resumen, se debe dividir el contenido del texto en unidades temáticas (párrafos) para trabajarlas una a una.",
+            eu: "Laburpena egiteko, testuaren edukia unitate tematiko txikiagoetan (paragrafoetan) banatu behar da banan-banan lantzeko.",
+            base_es: "Descomposición / Diseño de algoritmos",
+            base_eu: "Deskonposizioa / Algoritmoen diseinua",
+            exp_es: "Se fracciona un texto largo en partes manejables para extraer ideas básicas  y se establecen pasos para evitar la opinión personal.",
+            exp_eu: "Testu luze bat zati kudeagarrietan zatitzen da oinarrizko ideiak ateratzeko  eta laburpenean iritzi pertsonalik ez sartzeko urrats sekuentzialak ezartzen dira."
+        },
+        {
+            es: "Para identificar la intención del texto, se deben buscar sistemáticamente marcas de subjetividad (1.ª persona, adjetivos).",
+            base_es: "Reconocimiento de patrones / Abstracción",
+            base_eu: "Patroien identifikazioa / Abstrakzioa",
+            exp_es: "Se detectan recursos repetitivos (léxico valorativo ) para clasificar el tipo de texto y su finalidad.",
+            exp_eu: "Baliabide errepikakorrak detektatzen dira (lexiko baloratzailea ) testu mota eta bere helburu komunikatiboa sailkatzeko."
+        },
+        {
+            es: "Antes de redactar el texto de opinión, se debe diseñar un esquema lógico (tesis, argumentos, conclusión) para organizar las ideas.",
+            eu: "Iritzi-testu bat idatzi aurretik, ideiak antolatzeko eskema logiko bat (tesia, argudioak, ondorioa) diseinatu behar da.",
+            base_es: "Diseño de algoritmos / Descomposición",
+            base_eu: "Algoritmoen diseinua / Deskonposizioa",
+            exp_es: "Se definen pasos para construir un mensaje persuasivo  y se estructura en párrafos para una línea argumentativa clara.",
+            exp_eu: "Mezu pertsuasibo bat eraikitzeko urrats logikoak definitzen dira  eta paragrafoetan egituratzen da argudio-lerro argi bati eusteko."
+        },
+        {
+            es: "Para elegir el sinónimo más adecuado según el contexto, se deben filtrar las acepciones de la palabra que no son pertinentes.",
+            eu: "Testuinguruaren arabera sinonimo egokiena hautatzeko, hitzaren adiera ez-egokiak iragazi behar dira.",
+            base_es: "Abstracción / Reconocimiento de patrones",
+            base_eu: "Abstrakzioa / Patroien identifikazioa",
+            exp_es: "De los significados posibles (ej. 'embrollo' o 'asueto' ), se aísla el relevante para el contexto.",
+            exp_eu: "Hitz baten esanahi guztien artean (adibidez, 'embrollo' edo 'asueto' ), artikuluaren testuinguru zehatzerako garrantzitsua den bakarra isolatzen da."
+        },
+        {
+            es: "Para resolver la sintaxis de una oración compuesta, se deben separar la principal y las subordinadas.",
+            eu: "Perpaus konposatu baten sintaxia ebazteko, perpaus nagusia eta mendekoak bereizi behar dira.",
+            base_es: "Descomposición / Reconocimiento de patrones",
+            base_eu: "Deskonposizioa / Patroien identifikazioa",
+            exp_es: "Se fragmenta la estructura compleja y se buscan patrones de nexos (ej. adversativos ) para identificar el tipo.",
+            exp_eu: "Egitura sintaktiko konplexu bat unitate sinpleetan deskonposatzen da eta nexuen patroiak bilatzen dira (adibidez, nexo adversatiboak ) mota identifikatzeko."
+        },
+        {
+            es: "Para determinar el tipo de perífrasis verbal, se debe analizar la repetición de estructuras fijas (auxiliar + enlace + principal).",
+            eu: "Perifrasi berbal baten mota zehazteko, egitura finkoen (laguntzailea + lotura + nagusia) errepikapena aztertu behar da.",
+            base_es: "Identificación de patrones / Abstracción",
+            base_eu: "Patroi-identifikazioa / Abstrakzioa",
+            exp_es: "Se identifican moldes gramaticals (ej. 'comienzan a comprender' ), descomponiendo la función de cada elemento.",
+            exp_eu: "Molde gramatikalak identifikatzen dira (adibidez, 'comienzan a comprender' ), elementu bakoitzaren funtzioa deskonposatuz."
+        },
+        {
+            es: "Para analizar la cohesión textual, se deben identificar sistemáticamente las conexiones entre conectores y anáforas.",
+            eu: "Testuaren kohesioa aztertzeko, konektoreen eta anaforen arteko loturak sistematikoki identifikatu behar dira.",
+            base_es: "Reconocimiento de patrones / Diseño de algoritmos",
+            base_eu: "Patroien identifikazioa / Algoritmoen diseinua",
+            exp_es: "Se detectan elementos recurrentes (pronombres anafóricos ) mediante un proceso ordenado.",
+            exp_eu: "Testuaren hariari eusten dioten elementu errepikakorrak (pronome anaforikoak ) detektatzeko prozesu ordenatua jarraitzen da."
+        },
+        {
+            es: "En literatura, para vincular época y autor, se deben omitir detalles biográficos no esenciales.",
+            eu: "Literatura-galderetan garaia eta autorearen ezaugarriak lotzeko, xehetasun biografiko ez-funtsezkoak alde batera utzi behar dira.",
+            base_es: "Abstracción / Reconocimiento de patrones",
+            base_eu: "Abstrakzioa / Patroien identifikazioa",
+            exp_es: "Se selecciona información histórica clave (ej. Guerra Civil en 'Nada') y se aplican patrones estilísticos.",
+            exp_eu: "Giltzarrizko informazio historikoa hautatzen da (adibidez, Gerra Zibila 'Nada' obran) eta mugimenduaren patroi estilistikoak aplikatzen dira."
+        },
+        {
+            es: "Para analizar formas verbales, se debe dividir la palabra en raíz y desinencias (persona, tiempo, modo).",
+            eu: "Aditz-formak analizatzeko, hitza erroan eta desinentzietan (pertsona, denbora, modua) zatitu behar da.",
+            base_es: "Descomposición / Reconocimiento de patrones",
+            base_eu: "Deskonposizioa / Patroien identifikazioa",
+            exp_es: "Se fragmenta la palabra en unidades morfológicas y se identifica el patrón de conjugación.",
+            exp_eu: "Hitz bakar bat bere unitate morfologikoetan zatitzen da eta aditz-jokabidearen patroia identifikatzen da."
+        },
+        {
+            es: "Para realizar un comentario literario, se debe dividir el texto en diferentes niveles (temas, recursos) para profundizar en el análisis.",
+            eu: "Literatura-iruzkin bat egiteko, testua atal ezberdinetan (gaiak, baliabideak) banatu behar da analisia sakontzeko.",
+            base_es: "Descomposición / Diseño de algoritmos",
+            base_eu: "Deskonposizioa / Algoritmoen diseinua",
+            exp_es: "Se segmenta el análisis (sociedad rural, duelo) siguiendo los pasos de la guía.",
+            exp_eu: "Analisi konplexu bat geruza zehatzetan segmentatzen da (gizarte rura, dolua) eta ebazpen-gidak eskatzen dituen urratsak jarraitzen dira."
+        },
+        {
+            es: "Para identificar el registro formal, se debe observar el uso repetitivo de léxico culto y sintaxis compleja.",
+            eu: "Erregistro formala identifikatzeko, lexiko kultuaren eta sintaxi konplexuaren erabilera errepikakorra behatu behar da.",
+            base_es: "Reconocimiento de patrones / Abstracción",
+            base_eu: "Patroien identifikazioa / Abstrakzioa",
+            exp_es: "Se detectan marcadores de formalidad (frases largas, vocabulario amplio ) abstrayendo el mensaje de las palabras.",
+            exp_eu: "Formaltasunaren markatzaileak detektatzen dira (frase luzeak, hiztegi zabala ) eta mezua hitz zehatzetatik abstraktzen da."
+        },
+        {
+            es: "En la revisión final, se debe aplicar un proceso sistemático de detección de faltas de ortografía en todas las preguntas.",
+            eu: "Azken berrikusketan, akats ortografikoak detektatzeko prozesu sistematiko bat aplikatu behar da galdera guztietan.",
+            base_es: "Diseño de algoritmos / Reconocimiento de patrones",
+            base_eu: "Algoritmoen diseinua / Patroien identifikazioa",
+            exp_es: "Se establece una rutina de escaneo para evitar la penalización por falta  comparando palabras con patrones memorizados.",
+            exp_eu: "Eskaneatze-errutina bat ezartzen da akats bakoitzak kentzen duen puntuaazioa aurrezteko eta hitzak memorizatutako patroiekin konparatzen dira."
+        },
+        {
+            es: "Para elegir una opción (A o B), se deben comparar la dificultad de cada pregunta y las capacidades propias.",
+            eu: "Aukera baten (A edo B) hautua egiteko, galdera bakoitzaren zailtasuna eta norberaren gaitasunak konparatu behar dira.",
+            base_es: "Diseño de algoritmos / Abstracción",
+            base_eu: "Algoritmoen diseinua / Abstrakzioa",
+            exp_es: "Se aplica un proceso lógico de toma de decisiones, centrándose en la viabilidad técnica.",
+            exp_eu: "Erabakiak hartzeko prozesu logikoa aplikatzen da, lehentasun pertsonalak alde batera utziz eta bideragarritasunean zentratuz."
+        },
+        {
+            es: "Para entender recursos retóricos como la metáfora, se debe buscar la lógica de semejanza entre el elemento real e imaginario.",
+            eu: "Baliabide erretorikoak ulertzeko (adibidez, metaforak), elementu errealaren eta irudizkoaren arteko antzekotasun-logika bilatu behar da.",
+            base_es: "Reconocimiento de patrones / Abstracción",
+            base_eu: "Patroien identifikazioa / Abstrakzioa",
+            exp_es: "Se identifica la relación entre conceptos (ej. 'bandadas' y humanos ) y se aísla el significado simbólico.",
+            exp_eu: "Kontzeptu ezberdinen arteko erlazio-eredua (adibidez, 'bandadak' eta gizakiak ) identifikatzen da eta esanahi sinbolikoa isolatzen da."
+        },
+        {
+            es: "Para contextualizar un texto literario, se deben seleccionar solo los datos históricos significativos para la obra.",
+            eu: "Literatura-testu baten testuingurua emateko, obrarentzat esanguratsuak diren datu historikoak bakarrik hautatu behar dira.",
+            base_es: "Abstracción / Descomposición",
+            base_eu: "Abstrakzioa / Deskonposizioa",
+            exp_es: "Se filtran hitos irrelevantes y se divide la explicación en factores que afectan directamente al autor.",
+            exp_eu: "Garrantzirik ez duten mugarriak iragazten dira eta azalpena autoreari zuzenean eragiten dioten faktoreetan banatzen da."
+        },
+        {
+            es: "Para construir una respuesta larga, se debe organizar la información de forma jerárquica: primero la idea principal y luego los detalles.",
+            eu: "Erantzun luze bat eraikitzeko, informazioa modu hierarkikoan antolatu behar da: lehenengo ideia nagusia eta gero xehetasunak.",
+            base_es: "Diseño de algoritmos / Descomposición",
+            base_eu: "Algoritmoen diseinua / Deskonposizioa",
+            exp_es: "Se aplican reglas de jerarquización para estructurar el discurso  y se fragmenta la información.",
+            exp_eu: "Hierarkizazio-arauak aplikatzen dira diskurtsoa egituratzeko  eta informazioa unitate txikiagotan zatitzen da irakurgarritasunerako."
+        }
+    ];
+
+    function toggleLang() {
+        currentLang = currentLang === 'eu' ? 'es' : 'eu';
+        document.getElementById('lang-btn').innerText = currentLang === 'eu' ? 'ESPAÑOL' : 'EUSKERA';
+        document.getElementById('pdf-btn').innerText = currentLang === 'eu' ? 'PDF-ra esportatu' : 'Exportar a PDF';
+        document.getElementById('title').innerText = currentLang === 'eu' ? 'Irakaskuntza Estrategiak eta PK Checklist-a' : 'Lista de Verificación: Estrategias Docentes y PC';
+        document.getElementById('th-afirm').innerText = currentLang === 'eu' ? 'Enuntziatua' : 'Enunciado';
+        document.getElementById('th-expl').innerText = currentLang === 'eu' ? 'Arrazoitzea (PK)' : 'Justificación (PC)';
+        renderTable();
+    }
+
+    function renderTable() {
+        const body = document.getElementById('table-body');
+        const oldState = Array.from(body.querySelectorAll('tr')).map(tr => {
+            const radio = tr.querySelector('input[type="radio"]:checked');
+            return radio ? radio.value : null;
+        });
+
+        body.innerHTML = '';
+        data.forEach((item, i) => {
+            const tr = document.createElement('tr');
+            tr.id = `row-${i}`;
+            const val = oldState[i];
+            if(val === 'si') tr.className = 'row-yes';
+            if(val === 'no') tr.className = 'row-no';
+
+            tr.innerHTML = `
+                <td>${currentLang === 'eu' ? item.eu : item.es}</td>
+                <td style="text-align:center"><input type="radio" name="q${i}" value="si" ${val==='si'?'checked':''} onchange="updateRow(${i}, 'si')"></td>
+                <td style="text-align:center"><input type="radio" name="q${i}" value="no" ${val==='no'?'checked':''} onchange="updateRow(${i}, 'no')"></td>
+                <td class="explanation-cell">
+                    <div id="exp-${i}" class="${val ? '' : 'hidden'}">
+                        <span class="base-label">${currentLang === 'eu' ? item.base_eu : item.base_es}</span>
+                        ${currentLang === 'eu' ? item.exp_eu : item.exp_es}
+                    </div>
+                </td>
+            `;
+            body.appendChild(tr);
+        });
+        updateProgress();
+    }
+
+    function updateRow(index, val) {
+        document.getElementById(`row-${index}`).className = val === 'si' ? 'row-yes' : 'row-no';
+        document.getElementById(`exp-${index}`).classList.remove('hidden');
+        updateProgress();
+    }
+
+    function updateProgress() {
+        const siCount = document.querySelectorAll('input[type="radio"][value="si"]:checked').length;
+        document.getElementById('progress-bar').style.width = (siCount / data.length) * 100 + '%';
+    }
+
+    function exportToPDF() {
+        const element = document.getElementById('capture-area');
+        const opt = {
+            margin: 10,
+            filename: 'Checklist_Estrategias_Docentes_PK.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, logging: false },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Ejecutar exportación
+        html2pdf().set(opt).from(element).save();
+    }
+
+    window.onload = renderTable;
+</script>
+</body>
+</html>
