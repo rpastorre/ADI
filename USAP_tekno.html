@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="eu">
+<head>
+    <meta charset="UTF-8">
+    <title>PK Checklist Finkoa eta Koloreduna - Teknologia II</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            --primary: #1a252f;
+            --accent: #d35400;
+            --bg: #f4f7f6;
+            --white: #ffffff;
+            /* Koloreak definitu */
+            --yes-color: #d4edda; /* Berde argia */
+            --no-color: #f8d7da;  /* Gorri argia */
+            --yes-border: #c3e6cb;
+            --no-border: #f5c6cb;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            flex-shrink: 0;
+            background: var(--white);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 2000;
+            padding: 15px 0;
+        }
+
+        .header-content {
+            max-width: 1250px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        h1 { margin: 0; color: var(--primary); font-size: 1.2rem; }
+
+        .btn-group { display: flex; gap: 10px; }
+
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: #ecf0f1;
+            border-radius: 4px;
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background: #28a745;
+            border-radius: 4px;
+            transition: width 0.4s ease;
+        }
+
+        main {
+            flex-grow: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .table-wrapper {
+            flex-grow: 1;
+            overflow-y: auto;
+            background: var(--white);
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            position: relative;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            table-layout: fixed;
+        }
+
+        /* GOIBURU FINKOA */
+        thead th {
+            position: sticky;
+            top: 0;
+            background-color: var(--primary);
+            color: var(--white);
+            padding: 15px;
+            text-align: left;
+            font-size: 0.85rem;
+            z-index: 100;
+            border-bottom: 2px solid rgba(0,0,0,0.1);
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.88rem;
+            vertical-align: top;
+            background-color: var(--white); /* Defektuz zuria */
+            transition: background-color 0.3s ease;
+        }
+
+        /* KOLOREAK AUKERATZEAN (td-ei aplikatu behar zaie sticky-arekin ondo dabilen) */
+        .row-yes td {
+            background-color: var(--yes-color) !important;
+            border-bottom-color: var(--yes-border);
+        }
+
+        .row-no td {
+            background-color: var(--no-color) !important;
+            border-bottom-color: var(--no-border);
+        }
+
+        .lang-btn, .pdf-btn {
+            color: white; border: none; padding: 8px 16px;
+            border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.75rem;
+        }
+        .lang-btn { background: #2980b9; }
+        .pdf-btn { background: var(--accent); }
+
+        .explanation-cell { font-size: 0.8rem; color: #333; border-left: 1px solid rgba(0,0,0,0.05); }
+        .base-label {
+            display: inline-block;
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 0.72rem;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            background: rgba(255,255,255,0.5);
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+        .hidden { display: none; }
+        input[type="radio"] { transform: scale(1.3); cursor: pointer; }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-content">
+        <div class="top-bar">
+            <h1 id="title">PK Checklist Interaktiboa (25 Item)</h1>
+            <div class="btn-group">
+                <button class="pdf-btn" onclick="exportToPDF()">PDF Deskargatu</button>
+                <button class="lang-btn" id="lang-btn" onclick="toggleLang()">ESPAÑOL</button>
+            </div>
+        </div>
+        <div class="progress-container">
+            <div id="progress-bar"></div>
+        </div>
+    </div>
+</header>
+
+<main id="capture-area">
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th id="th-afirm" style="width: 45%;">Azterketako Jarduera (EHU 2025)</th>
+                    <th style="width: 65px; text-align: center;">BAI</th>
+                    <th style="width: 65px; text-align: center;">EZ</th>
+                    <th id="th-expl" style="width: 45%;">PK Oinarriak eta Arrazoitzea</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                </tbody>
+        </table>
+    </div>
+</main>
+
+<script>
+    let currentLang = 'eu';
+    const data = [
+        { eu: "Trakzio-saiakuntzan, luzapen unitarioa kalkulatu eta elastikotasun-moduluarekin (Young) erlazionatzen da.", es: "En el ensayo de tracción, se calcula el alargamiento unitario y se relaciona con el módulo de Young.", base_eu: "Abstrakzioa / Algoritmoak", base_es: "Abstracción / Algoritmos", exp_eu: "Materialaren portaera formula matematiko (abstrakzioa) eta sekuentzia (algoritmoa) bihurtzen da.", exp_es: "El comportamiento se vuelve fórmula (abstracción) y secuencia (algoritmo)." },
+        { eu: "Habe baten segurtasun-koefizientea aztertzean, esfortzu maximoa eta muga elastikoa alderatzen dira.", es: "Al analizar el coeficiente de seguridad de una viga, se comparan el esfuerzo máximo y el límite elástico.", base_eu: "Patroi-identifikazioa / Abstrakzioa", base_es: "Identificación de patrones / Abstracción", exp_eu: "Muga elastikoa patroi gisa erabiltzen da, errealitatea modelo sinplean laburtuz.", exp_es: "El límite elástico sirve de patrón, simplificando la realidad en un modelo." },
+        { eu: "Fe-C diagramako hozte-kurbetan, fase-aldaketak puntu kritikoen arabera identifikatzen dira.", es: "En las curvas de enfriamiento del diagrama Fe-C, se identifican cambios de fase según puntos críticos.", base_eu: "Patroi-identifikazioa / Deskonposizioa", base_es: "Identificación de patrones / Descomposición", exp_eu: "Grafikoaren formak (patroiak) eta tarteka banatutako prozesua (deskonposizioa) aztertzen dira.", exp_es: "Se analizan formas (patrones) y el proceso dividido en tramos (descomposición)." },
+        { eu: "Brinell saiakuntzan, aztarnaren diametroa neurtu ondoren, karga eta azalera erlazionatzen dira.", es: "En el ensayo Brinell, tras medir el diámetro de la huella, se relacionan carga y superficie.", base_eu: "Deskonposizioa / Algoritmoak", base_es: "Descomposición / Algoritmos", exp_eu: "Prozedura urrats finkoetan banatzen da emaitza lortzeko.", exp_es: "El procedimiento se divide en pasos fijos para obtener el resultado." },
+        { eu: "Egitura kristalinoa aztertzean, atomoen antolaketa unitate zelula simetrikoetara sinplifikatzen da.", es: "Al analizar la estructura cristalina, la organización atómica se simplifica en celdas unitarias.", base_eu: "Abstrakzioa / Patroi-identifikazioa", base_es: "Abstracción / Identificación de patrones", exp_eu: "Milioika atomo kendu (abstrakzioa) eta egitura errepikakorra aurkitu (patroia).", exp_es: "Se ignoran átomos (abstracción) y se busca la estructura repetitiva (patrón)." },
+        { eu: "Motorren zikloetan (Otto/Diesel), adiabatikoak eta isokoroak diren prozesuak bereizten dira.", es: "En ciclos de motores (Otto/Diesel), se distinguen procesos adiabáticos e isocóricos.", base_eu: "Deskonposizioa / Patroi-identifikazioa", base_es: "Descomposición / Identificación de patrones", exp_eu: "Zikloa fasetan banatzen da eta kurba motak identifikatzen dira.", exp_es: "Se divide el ciclo en fases e identifican tipos de curva." },
+        { eu: "P-V diagraman azalera integratuz lana lortzean, eredu geometriko bat erabiltzen da.", es: "Al obtener el trabajo integrando el área en un diagrama P-V, se usa un modelo geométrico.", base_eu: "Abstrakzioa / Algoritmoak", base_es: "Abstracción / Algoritmos", exp_eu: "Energia azalera birtual bihurtzen da eta integrazio-arauak aplikatzen dira.", exp_es: "La energía se vuelve superficie virtual y se aplican reglas de integración." },
+        { eu: "Carnot-en errendimendua kalkulatzean, tenperatura-iturri idealak soilik hartzen dira kontuan.", es: "Al calcular el rendimiento de Carnot, solo se consideran fuentes ideales.", base_eu: "Abstrakzioa / Patroi-identifikazioa", base_es: "Abstracción / Identificación de patrones", exp_eu: "Marruskadurak kendu (abstrakzioa) eta muga teorikoa (patroia) bilatzen da.", exp_es: "Se ignoran rozamientos (abstracción) y se busca el límite teórico (patrón)." },
+        { eu: "Hozte-makina baten COP-a kalkulatzeko, beroa eta lana erlazionatzen dira.", es: "Para calcular el COP de una máquina frigorífica, se relacionan calor y trabajo.", base_eu: "Algoritmoak / Deskonposizioa", base_es: "Algoritmos / Descomposición", exp_eu: "Energia-fluxuak banatu eta formula estandarra aplikatzen da.", exp_es: "Se desglosan flujos y se aplica la fórmula estándar." },
+        { eu: "Ziklo baten noranzkoak (erloju-orratzen aldekoa edo kontrakoa) funtzioa definitzen du.", es: "El sentido de un ciclo (horario o antihorario) define su función.", base_eu: "Patroi-identifikazioa / Abstrakzioa", base_es: "Identificación de patrones / Abstracción", exp_eu: "Norabide grafikoa (patroia) funtzio baten adierazle (abstrakzioa) bihurtzen da.", exp_es: "La dirección gráfica representa una función." },
+        { eu: "Zirkuitu pneumatiko baten sekuentzia (A+ B+ A- B-) mugimendu-diagrama bidez diseinatzen da.", es: "La secuencia neumática (A+ B+ A- B-) se diseña mediante diagrama de movimiento.", base_eu: "Algoritmoak / Deskonposizioa", base_es: "Algoritmos / Descomposición", exp_eu: "Mugimendu osoa urrats ordenatuetan banatzen da.", exp_es: "El movimiento total se divide en pasos ordenados." },
+        { eu: "Balbula baten sinboloa (adib. 5/2) erabiltzen denean barneko kanalizazioak adierazteko.", es: "Cuando se usa el símbolo de una válvula (ej. 5/2) para representar canalizaciones.", base_eu: "Abstrakzioa / Patroi-identifikazioa", base_es: "Abstracción / Identificación de patrones", exp_eu: "Mekanismo fisikoa sinbolo estandar batean laburtzen da.", exp_es: "El mecanismo físico se resume en un símbolo estándar." },
+        { eu: "AND eta OR balbulak erabiliz kontrol-logika eraikitzen denean.", es: "Al construir la lógica de mando usando válvulas AND y OR.", base_eu: "Algoritmoak / Abstrakzioa", base_es: "Algoritmos / Abstracción", exp_eu: "Baldintza fisikoak egitura logiko programagarri bihurtzen dira.", exp_es: "Condiciones físicas se vuelven estructuras lógicas." },
+        { eu: "Zilindro baten indarra kalkulatzeko, presioa, sekzioa eta errendimendua konbinatzen dira.", es: "Para calcular la fuerza de un cilindro se combinan presión, sección y rendimiento.", base_eu: "Deskonposizioa / Algoritmoak", base_es: "Descomposición / Algoritmos", exp_eu: "Indarra osagaietan banatzen da eta kalkulu-urratsak jarraitzen dira.", exp_es: "La fuerza se divide en componentes y se siguen pasos de cálculo." },
+        { eu: "Grafcet-a edo fase-diagrama aztertzean, trantsizio-baldintzak identifikatzen dira.", es: "Al analizar el grafcet, se identifican las condiciones de transición.", base_eu: "Patroi-identifikazioa / Algoritmoak", base_es: "Identificación de patrones / Algoritmos", exp_eu: "Egoera-aldaketak (patroiak) eta horien ordena (algoritmoa) aztertzen dira.", exp_es: "Se analizan cambios de estado y su orden." },
+        { eu: "Sentsoreen sarrerekin egia-taula osatzen denean, konbinazio guztiak aztertuz.", es: "Al completar la tabla de verdad analizando todas las combinaciones.", base_eu: "Deskonposizioa / Algoritmoak", base_es: "Descomposición / Algoritmos", exp_eu: "Arazo konplexua kasu guztietan xehatzen da modu sistematikoan.", exp_es: "El problema se desglosa en todos los casos sistemáticamente." },
+        { eu: "Karnaugh-en mapan 1-ekoak multzokatzen direnean funtzioa minimizatzeko.", es: "Cuando se agrupan los unos en el mapa de Karnaugh para minimizar.", base_eu: "Patroi-identifikazioa / Abstrakzioa", base_es: "Identificación de patrones / Abstracción", exp_eu: "Laukien hurbiltasuna (patroia) funtzioa sinplifikatzeko (abstrakzioa) erabiltzen da.", exp_es: "Se usa la vecindad para simplificar la función." },
+        { eu: "Funtzio logiko batetik abiatuta ate logikoen bidezko logigrama marrazten denean.", es: "Cuando se dibuja el logigrama de puertas lógicas a partir de una función.", base_eu: "Algoritmoak / Abstrakzioa", base_es: "Algoritmos / Abstracción", exp_eu: "Ekuazioa hardware-eredu bihurtzen da urrats sekuentzialen bidez.", exp_es: "La ecuación se vuelve modelo hardware paso a paso." },
+        { eu: "Sistemaren irteera desgaitzeko 'Inhibizio' baldintza bat aplikatzen denean.", es: "Al aplicar una condición de 'Inhibición' para desactivar la salida.", base_eu: "Abstrakzioa / Patroi-identifikazioa", base_es: "Abstracción / Identificación de patrones", exp_eu: "Segurtasun-kontzeptua egitura logiko batekin lotzen da.", exp_es: "Se asocia seguridad con estructura lógica." },
+        { eu: "Zirkuitu baten portaera aztertzeko kronograma (denbora-diagrama) erabiltzen denean.", es: "Al usar un cronograma para analizar el comportamiento del circuito.", base_eu: "Patroi-identifikazioa / Deskonposizioa", base_es: "Identificación de patrones / Descomposición", exp_eu: "Seinaleen aldaketak identifikatu eta denbora-tarteak banatzen dira.", exp_es: "Identifica cambios de señal y divide tiempos." },
+        { eu: "Bloke-diagraman sarrera, prozesua eta irteera hierarkikoki bereizten direnean.", es: "Cuando en el diagrama de bloques se separan entrada, proceso y salida.", base_eu: "Deskonposizioa / Abstrakzioa", base_es: "Descomposición / Abstracción", exp_eu: "Makina fisikoa atal funtzionaletan banatzen da.", exp_es: "La máquina se divide en partes funcionales." },
+        { eu: "Begizta itxian sentsorearen bidezko konparazioa eta errorea kalkulatzen denean.", es: "Al calcular el error mediante comparación del sensor en lazo cerrado.", base_eu: "Algoritmoak / Patroi-identifikazioa", base_es: "Algoritmos / Identificación de patrones", exp_eu: "Kontrol-begizta prozesu errepikakor eta kalkulu gisa ulertzen da.", exp_es: "El lazo se entiende como proceso repetitivo y cálculo." },
+        { eu: "Transferentzia-funtzioa lortzeko blokeen algebra aplikatzen denean.", es: "Al aplicar álgebra de bloques para la función de transferencia.", base_eu: "Abstrakzioa / Algoritmoak", base_es: "Abstracción / Algoritmos", exp_eu: "Sistemaren dinamika ekuazioetara laburtzen da arauak jarraituz.", exp_es: "La dinámica se reduce a ecuaciones siguiendo reglas." },
+        { eu: "Poloen eta zeroen kokapena plano konplexuan identifikatzen denean.", es: "Al identificar polos y ceros en el plano complejo.", base_eu: "Patroi-identifikazioa / Abstrakzioa", base_es: "Identificación de patrones / Abstracción", exp_eu: "Puntuen kokapenak sistemaren egonkortasuna adierazten du.", exp_es: "La posición de puntos indica estabilidad." },
+        { eu: "PID kontrolagailu baten parametroak doitu behar direnean erantzun optimoa lortzeko.", es: "Cuando se ajustan los parámetros de un controlador PID.", base_eu: "Deskonposizioa / Algoritmoak", base_es: "Descomposición / Algoritmos", exp_eu: "Kontrola hiru osagaitan banatu eta prozedura finkoa jarraitzen da.", exp_es: "Divide el control en tres y sigue un proceso fijo." }
+    ];
+
+    function toggleLang() {
+        currentLang = currentLang === 'eu' ? 'es' : 'eu';
+        document.getElementById('lang-btn').innerText = currentLang === 'eu' ? 'ESPAÑOL' : 'EUSKARA';
+        document.getElementById('title').innerText = currentLang === 'eu' ? 'PK Checklist Interaktiboa (25 Item)' : 'Checklist Interactivo PC (25 Ítems)';
+        document.getElementById('th-afirm').innerText = currentLang === 'eu' ? 'Azterketako Jarduera (EHU 2025)' : 'Actividad de Examen (EHU 2025)';
+        document.getElementById('th-expl').innerText = currentLang === 'eu' ? 'PK Oinarriak eta Arrazoitzea' : 'Pilares PC y Razonamiento';
+        renderTable();
+    }
+
+    function renderTable() {
+        const body = document.getElementById('table-body');
+        const selectedValues = Array.from(document.querySelectorAll('input[type="radio"]:checked')).map(r => ({name: r.name, value: r.value}));
+        
+        body.innerHTML = '';
+        data.forEach((item, i) => {
+            const tr = document.createElement('tr');
+            tr.id = `row-${i}`;
+            
+            // Berreskuratu aurreko hautaketa kolorea mantentzeko renderizatzean
+            const prev = selectedValues.find(v => v.name === `q-${i}`);
+            if(prev) tr.className = prev.value === 'si' ? 'row-yes' : 'row-no';
+
+            tr.innerHTML = `
+                <td>${currentLang === 'eu' ? item.eu : item.es}</td>
+                <td style="text-align:center"><input type="radio" name="q-${i}" value="si" ${prev?.value==='si'?'checked':''} onclick="updateRow(${i}, 'si')"></td>
+                <td style="text-align:center"><input type="radio" name="q-${i}" value="no" ${prev?.value==='no'?'checked':''} onclick="updateRow(${i}, 'no')"></td>
+                <td class="explanation-cell">
+                    <div id="exp-${i}" class="${prev ? '' : 'hidden'}">
+                        <span class="base-label">${currentLang === 'eu' ? item.base_eu : item.base_es}</span><br>
+                        ${currentLang === 'eu' ? item.exp_eu : item.exp_es}
+                    </div>
+                </td>
+            `;
+            body.appendChild(tr);
+        });
+        updateProgress();
+    }
+
+    function updateRow(index, val) {
+        const row = document.getElementById(`row-${index}`);
+        row.className = val === 'si' ? 'row-yes' : 'row-no';
+        document.getElementById(`exp-${index}`).classList.remove('hidden');
+        updateProgress();
+    }
+
+    function updateProgress() {
+        const total = data.length;
+        const checked = document.querySelectorAll('input[type="radio"]:checked').length;
+        document.getElementById('progress-bar').style.width = (checked / total) * 100 + '%';
+    }
+
+    function exportToPDF() {
+        const element = document.getElementById('capture-area');
+        const opt = {
+            margin: 5,
+            filename: 'PK_Checklist_Finkoa_Koloreak.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(element).save();
+    }
+
+    renderTable();
+</script>
+
+</body>
+</html>
