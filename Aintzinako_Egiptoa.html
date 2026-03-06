@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="eu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antzinako Egipto - Teoria eta Birpasatzea</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a1628;
+        }
+
+        #root {
+            min-height: 100vh;
+        }
+
+        /* Patrones geométricos egipcios */
+        .egyptian-pattern {
+            background-image: 
+                repeating-linear-gradient(
+                    45deg,
+                    transparent,
+                    transparent 20px,
+                    rgba(212, 165, 116, 0.03) 20px,
+                    rgba(212, 165, 116, 0.03) 40px
+                ),
+                repeating-linear-gradient(
+                    -45deg,
+                    transparent,
+                    transparent 20px,
+                    rgba(212, 165, 116, 0.03) 20px,
+                    rgba(212, 165, 116, 0.03) 40px
+                );
+        }
+
+        .lotus-pattern {
+            background-image: radial-gradient(circle at 20% 50%, rgba(30, 58, 95, 0.3) 2px, transparent 2px),
+                              radial-gradient(circle at 80% 50%, rgba(30, 58, 95, 0.3) 2px, transparent 2px);
+            background-size: 40px 40px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Iconos SVG personalizados
+        const ChevronRight = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+        );
+
+        const ChevronLeft = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+        );
+
+        const BookOpen = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+            </svg>
+        );
+
+        const Brain = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"></path>
+                <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"></path>
+            </svg>
+        );
+
+        const CheckCircle = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+        );
+
+        // Iconos de símbolos egipcios personalizados
+        const EgyptianIcon = ({ type }) => {
+            const icons = {
+                map: ( // 1. Kokapena
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+                        <line x1="8" y1="2" x2="8" y2="18"></line>
+                        <line x1="16" y1="6" x2="16" y2="22"></line>
+                    </svg>
+                ),
+                crown: ( // 2. Faraoia
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2L15 8L22 9L17 14L18 21L12 18L6 21L7 14L2 9L9 8L12 2Z"/>
+                        <rect x="3" y="19" width="18" height="3" rx="1"/>
+                    </svg>
+                ),
+                pyramid: ( // 3. Gizartea
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2L2 22H22L12 2Z"/>
+                        <line x1="6" y1="18" x2="18" y2="18" stroke="#0d1b2a" strokeWidth="1.5"/>
+                        <line x1="9" y1="13" x2="15" y2="13" stroke="#0d1b2a" strokeWidth="1.5"/>
+                    </svg>
+                ),
+                wheat: ( // 4. Ekonomia
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 2v20M8 6c0 2-2 4-2 6s2 4 2 6M16 6c0 2 2 4 2 6s-2 4-2 6"/>
+                        <circle cx="12" cy="4" r="1" fill="currentColor"/>
+                        <circle cx="12" cy="8" r="1" fill="currentColor"/>
+                        <circle cx="12" cy="12" r="1" fill="currentColor"/>
+                        <circle cx="12" cy="16" r="1" fill="currentColor"/>
+                        <circle cx="12" cy="20" r="1" fill="currentColor"/>
+                    </svg>
+                ),
+                sun: ( // 5. Erlijioa
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="5" fill="currentColor"/>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                ),
+                scroll: ( // 6. Idazketa
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M6 2C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H7C8.1 22 9 21.1 9 20V4C9 2.9 8.1 2 7 2H6Z"/>
+                        <path d="M18 2C16.9 2 16 2.9 16 4V20C16 21.1 16.9 22 18 22H19C20.1 22 21 21.1 21 20V4C21 2.9 20.1 2 19 2H18Z"/>
+                        <rect x="8" y="6" width="9" height="1.5" rx="0.5"/>
+                        <rect x="8" y="10" width="9" height="1.5" rx="0.5"/>
+                        <rect x="8" y="14" width="9" height="1.5" rx="0.5"/>
+                        <rect x="8" y="18" width="6" height="1.5" rx="0.5"/>
+                    </svg>
+                ),
+                vase: ( // 7. Artea
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M9 2L8 8C8 8 7 10 7 12C7 14 8 16 10 17V21H8V23H16V21H14V17C16 16 17 14 17 12C17 10 16 8 16 8L15 2H9Z"/>
+                        <ellipse cx="12" cy="7" rx="3" ry="1" fill="#0d1b2a"/>
+                        <path d="M10 11C10 11 11 12 12 12C13 12 14 11 14 11" stroke="#0d1b2a" strokeWidth="1" fill="none"/>
+                    </svg>
+                ),
+                star: ( // 8. Garrantzia
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2L14.5 9.5L22 10L17 15.5L19 22L12 18L5 22L7 15.5L2 10L9.5 9.5L12 2Z"/>
+                        <circle cx="12" cy="12" r="3" fill="#0d1b2a"/>
+                    </svg>
+                )
+            };
+            return icons[type] || icons.map;
+        };
+
+        const EgiptoApp = () => {
+            const [currentScreen, setCurrentScreen] = useState('teoria');
+            const [currentTopic, setCurrentTopic] = useState(0);
+            const [currentQuestion, setCurrentQuestion] = useState(null);
+            const [showAnswer, setShowAnswer] = useState(false);
+            const [waitTime, setWaitTime] = useState(10);
+            const [canShowAnswer, setCanShowAnswer] = useState(false);
+
+            const teoriaTopics = [
+                {
+                    id: 0,
+                    title: "1. Kokapena",
+                    icon: "🗺️",
+                    symbol: "map",
+                    content: `Egiptoko Antzinako Zibilizazioa Afrikako ipar-ekialdean garatu zen, Nilo ibaiaren inguruan. Ibai hau funtsezkoa izan zen egiptoarren bizitzarako, urak, elikagaiak eta komunikazio-bideak eskaintzen baitzituen.
+
+Nilo ibaiak urtero uholdeak sortzen zituen, eta horri esker lur emankorrak sortzen ziren nekazaritzarako. Horregatik esaten da askotan Egipto "Niloaren oparia" izan zela.
+
+Egipto basamortuz inguratuta zegoen, eta horrek babes naturala ematen zion kanpoko inbasioen aurrean.`
+                },
+                {
+                    id: 1,
+                    title: "2. Faraoia",
+                    icon: "👑",
+                    symbol: "crown",
+                    content: `Egiptoko gobernuburua faraoia zen. Faraoia ez zen soilik erregea; jainkotzat hartzen zuten. Bere esku zegoen botere politikoa, militarra eta erlijiosoa.
+
+Faraoiak legeak ezartzen zituen, armada zuzentzen zuen eta jainkoekin harremana zuela uste zen.
+
+Faraoiaren azpian beste funtzionario batzuk zeuden:
+• Bisira: administrazioaren arduraduna
+• Idazkariak
+• Apaizak
+• Armadako buruzagiak`
+                },
+                {
+                    id: 2,
+                    title: "3. Gizartea",
+                    icon: "🏛️",
+                    symbol: "pyramid",
+                    content: `Egiptoko gizartea piramide moduan antolatuta zegoen:
+
+🔺 Goialdean: Faraoia
+⬇️ Ondoren: Apaizak eta nobleak
+⬇️ Erdialdean: Idazkariak, artisauak eta merkatariak
+⬇️ Behealdean: Nekazariak
+⬇️ Azkenik: Esklaboak
+
+Gizarte-maila bakoitzak funtzio zehatzak zituen, eta oro har, jaiotzez zehazten zen pertsona bakoitzaren lekua gizartean.`
+                },
+                {
+                    id: 3,
+                    title: "4. Ekonomia",
+                    icon: "🌾",
+                    symbol: "wheat",
+                    content: `Egiptoko ekonomiaren oinarria nekazaritza zen. Gariak eta garagarrak lantzen zituzten batez ere. Nilo ibaiaren uholdeei esker, uzta onak lortzen zituzten.
+
+Artisautza ere garrantzitsua izan zen:
+• Zeramika
+• Bitxiak
+• Ehungintza
+• Papiroa
+
+Merkataritza Nilo ibaiaren bidez eta inguruko herriekin egiten zuten.
+
+Eguneroko bizitza gizarte-mailaren arabera aldatzen zen, baina familia, lana eta erlijioa funtsezkoak ziren denentzat.`
+                },
+                {
+                    id: 4,
+                    title: "5. Erlijioa",
+                    icon: "☀️",
+                    symbol: "sun",
+                    content: `Egiptoarrek jainko askotan sinesten zuten (politeismoa). Jainko nagusien artean:
+
+• Ra: Eguzkiaren jainkoa
+• Osiris: Hildakoen munduaren jainkoa
+• Isis: Ama eta babesaren jainkosa
+
+Heriotzaren ondorengo bizitzan sinesten zuten, eta horregatik garrantzi handia ematen zioten momifikazioari. Uste zuten arima gorputzera itzultzen zela.`
+                },
+                {
+                    id: 5,
+                    title: "6. Idazketa",
+                    icon: "📜",
+                    symbol: "scroll",
+                    content: `Egiptoarrek hieroglifoak erabiltzen zituzten idazteko. Idazkera hau tenpluetan eta monumentuetan agertzen zen, baina baita papiroan ere.
+
+Idazkariak oso garrantzitsuak ziren, gutxi batzuek baitzekiten irakurtzen eta idazten.
+
+Kultura egiptoarrak aurrerapen handiak egin zituen:
+• Matematiketan
+• Medikuntzan
+• Astronomian`
+                },
+                {
+                    id: 6,
+                    title: "7. Artea",
+                    icon: "🏺",
+                    symbol: "vase",
+                    content: `Egiptoko artea erlijioarekin eta boterearekin lotuta zegoen. Monumentu nagusien artean:
+
+• Piramideak (faraoien hilobiak)
+• Tenpluak
+• Eskulturak eta margolanak
+
+Ondare horren zati handi bat gaur egun ere ikus daiteke, eta gizateriaren historiarako oso garrantzitsua da.`
+                },
+                {
+                    id: 7,
+                    title: "8. Egiptoko zibilizazioaren garrantzia",
+                    icon: "⭐",
+                    symbol: "star",
+                    content: `Egiptoko Antzinako Zibilizazioa historiako lehen zibilizazio handietako bat izan zen. Bere antolaketa politikoa, kultura, erlijioa eta artea ondorengo zibilizazioentzat eredugarriak izan ziren.
+
+Gaur egun, Egiptok utzitako ondarea ulertzeak laguntzen digu:
+• Iragana aztertzen
+• Kultura desberdinak baloratzen
+• Gure historia hobeto ulertzen`
+                }
+            ];
+
+            const galderakEtaErantzunak = {
+                laburrak: [
+                    {
+                        galdera: "Non kokatzen zen Egiptoko Antzinako Zibilizazioa?",
+                        erantzuna: "Egiptoko Antzinako Zibilizazioa Afrikako ipar-ekialdean kokatzen zen, Nilo ibaiaren inguruan."
+                    },
+                    {
+                        galdera: "Zein ibai izan zen funtsezkoa egiptoarrentzat?",
+                        erantzuna: "Nilo ibaia izan zen funtsezkoa egiptoarrentzat. Urak, elikagaiak eta komunikazio-bideak eskaintzen zituen, eta urtero uholdeak sortzen zituen lur emankorrak sortzeko."
+                    },
+                    {
+                        galdera: "Nola deitzen zen Egiptoko agintari nagusia?",
+                        erantzuna: "Egiptoko agintari nagusia faraoia zen."
+                    },
+                    {
+                        galdera: "Zer zen faraoia egiptoarrentzat?",
+                        erantzuna: "Faraoia jainkotzat hartzen zuten egiptoarrek. Ez zen soilik erregea, botere politikoa, militarra eta erlijiosoa zituen."
+                    },
+                    {
+                        galdera: "Zein zen Egiptoko ekonomiaren oinarri nagusia?",
+                        erantzuna: "Nekazaritza zen Egiptoko ekonomiaren oinarri nagusia. Gariak eta garagarrak lantzen zituzten batez ere."
+                    },
+                    {
+                        galdera: "Zer motatako erlijioa zuten egiptoarrek?",
+                        erantzuna: "Egiptoarrek politeismoa zuten, hau da, jainko askotan sinesten zuten (Ra, Osiris, Isis...)."
+                    },
+                    {
+                        galdera: "Nola deitzen da egiptoarren idazkera?",
+                        erantzuna: "Hieroglifoak dira egiptoarren idazkera. Tenpluetan, monumentuetan eta papiroan erabiltzen zituzten."
+                    },
+                    {
+                        galdera: "Zertarako erabiltzen zuten momifikazioa?",
+                        erantzuna: "Momifikazioa heriotzaren ondorengo bizitzarako erabiltzen zuten. Uste zuten arima gorputzera itzultzen zela."
+                    },
+                    {
+                        galdera: "Aipatu Egiptoko jainko edo jainkosa baten izena.",
+                        erantzuna: "Ra (eguzkiaren jainkoa), Osiris (hildakoen munduaren jainkoa) edo Isis (ama eta babesaren jainkosa) dira Egiptoko jainko nagusiak."
+                    },
+                    {
+                        galdera: "Aipatu Egiptoko monumentu ospetsu bat.",
+                        erantzuna: "Piramideak dira Egiptoko monumenturik ospetsuenetakoak. Faraoien hilobiak ziren."
+                    }
+                ],
+                luzeak: [
+                    {
+                        galdera: "Azaldu zergatik izan zen Nilo ibaia hain garrantzitsua egiptoarren bizitzarako.",
+                        erantzuna: "Nilo ibaia funtsezkoa izan zen egiptoarrentzat hainbat arrazoirengatik: urak ematen zituen, komunikazio-bidea zen eta elikagaiak eskaintzen zituen. Urtero uholdeak sortzen zituen, eta horri esker lur emankorrak sortzen ziren nekazaritzarako. Horregatik esaten da Egipto 'Niloaren oparia' zela."
+                    },
+                    {
+                        galdera: "Zergatik esaten da Egipto 'Niloaren oparia' dela?",
+                        erantzuna: "Egipto 'Niloaren oparia' deitzen da Nilo ibaiak urtero sortzen zituen uholdeei esker lur emankorrak sortzen zirelako. Horri esker, nekazaritza garatu zen eta egiptoarrek biziraun ahal izan zuten basamortu inguruaren erdian."
+                    },
+                    {
+                        galdera: "Nolakoa zen Egiptoko gizartearen antolaketa?",
+                        erantzuna: "Egiptoko gizartea piramide moduan antolatuta zegoen. Goialdean faraoia zegoen, ondoren apaizak eta nobleak, erdialdean idazkariak, artisauak eta merkatariak, behealdean nekazariak eta azkenik esklaboak. Jaiotzez zehazten zen gizarte-maila."
+                    },
+                    {
+                        galdera: "Azaldu zein lan egiten zuten gizarteko maila desberdinek.",
+                        erantzuna: "Faraoiak gobernatu egiten zuen eta legeak ezartzen zituen. Apaizak eta nobleak erlijioaz eta administrazioaz arduratzen ziren. Idazkariak irakurtzen eta idazten zekiten gutxi batzuetakoak ziren. Artisauak eta merkatariak zeramika, bitxiak eta bestelako produktuak egiten zituzten. Nekazariak lurra lantzen zuten eta esklaboak lan gogorrenak egiten zituzten."
+                    },
+                    {
+                        galdera: "Zer botere zituen faraoiak?",
+                        erantzuna: "Faraoiak botere politikoa, militarra eta erlijiosoa zituen. Legeak ezartzen zituen, armada zuzentzen zuen eta jainkoekin harremana zuela uste zen. Jainkotzat hartzen zuten."
+                    },
+                    {
+                        galdera: "Nor zen bisira eta zein funtzio betetzen zuen?",
+                        erantzuna: "Bisira administrazioaren arduraduna zen, faraoiaren azpian zegoen funtzionariorik garrantzitsuenetakoa. Administrazioa kudeatzen zuen eta faraoiari laguntzen zion gobernuan."
+                    },
+                    {
+                        galdera: "Nola eragiten zuen basamortuaren kokapenak Egiptoko segurtasunean?",
+                        erantzuna: "Egipto basamortuz inguratuta zegoen, eta horrek babes naturala ematen zion kanpoko inbasioen aurrean. Basamortuak zailtzen zuen armadek Egiptora heltzea, eta hori dela eta zibilizazioak denbora luzez jarraipena izan zuen."
+                    },
+                    {
+                        galdera: "Azaldu Egiptoko ekonomiaren ezaugarri nagusiak.",
+                        erantzuna: "Egiptoko ekonomiaren oinarria nekazaritza zen, bereziki garia eta garagarra. Artisautza ere garrantzitsua zen: zeramika, bitxiak, ehungintza eta papiroa egiten zituzten. Merkataritza Nilo ibaiaren bidez eta inguruko herriekin egiten zuten."
+                    },
+                    {
+                        galdera: "Zer artisautza-lan egiten zituzten egiptoarrek?",
+                        erantzuna: "Egiptoarrek hainbat artisautza-lan egiten zituzten: zeramika, bitxiak, ehungintza (oihalak) eta papiroa. Produktu hauek merkataritzarako erabiltzen zituzten."
+                    },
+                    {
+                        galdera: "Nolakoa zen egiptoarren eguneroko bizitza?",
+                        erantzuna: "Eguneroko bizitza gizarte-mailaren arabera aldatzen zen, baina familia, lana eta erlijioa funtsezkoak ziren denentzat. Nekazariek lurra lantzen zuten, artisauek produktuak egiten zituzten eta maila altuagokoek gobernu eta erlijio-lanak egiten zituzten."
+                    },
+                    {
+                        galdera: "Azaldu egiptoarren sinesmen nagusiak.",
+                        erantzuna: "Egiptoarrek politeismoa zuten (jainko askotan sinesten zuten), hala nola Ra, Osiris eta Isis. Heriotzaren ondorengo bizitzan sinesten zuten, eta horregatik garrantzi handia ematen zioten momifikazioari. Uste zuten arima gorputzera itzultzen zela."
+                    },
+                    {
+                        galdera: "Zergatik zen garrantzitsua heriotzaren ondorengo bizitza egiptoarrentzat?",
+                        erantzuna: "Heriotzaren ondorengo bizitza oso garrantzitsua zen egiptoarrentzat sinismen erlijiosoengatik. Uste zuten arima gorputzera itzultzen zela, eta horregatik gorpuak momifikatzen zituzten eta hilobietara ondasunak eramaten zituzten bizitza horretan erabiltzeko."
+                    },
+                    {
+                        galdera: "Zer zen momifikazioa eta zergatik egiten zuten?",
+                        erantzuna: "Momifikazioa gorpua kontserbatzeko prozesua zen. Egiten zuten heriotzaren ondorengo bizitzan sinesten zutelako eta uste zutelako arima gorputzera itzuli behar zela. Gorpua prestatu egiten zuten bizitza horretan erabiltzeko."
+                    },
+                    {
+                        galdera: "Zer dira hieroglifoak eta non erabiltzen zituzten?",
+                        erantzuna: "Hieroglifoak egiptoarren idazkera-sistema dira. Tenpluetan eta monumentuetan agertzen zen, baina baita papiroan ere. Idazkariak bakarrik zekiten irakurtzen eta idazten."
+                    },
+                    {
+                        galdera: "Zergatik ziren idazkariak oso garrantzitsuak?",
+                        erantzuna: "Idazkariak oso garrantzitsuak ziren gutxi batzuek baitzekiten irakurtzen eta idazten. Administrazioa kudeatzen zuten, kontuak egiten zituzten eta informazioa gordetzen zuten. Gizarte-maila altuagokoa ziren."
+                    },
+                    {
+                        galdera: "Azaldu Egiptoko artearen ezaugarri nagusiak.",
+                        erantzuna: "Egiptoko artea erlijioarekin eta boterearekin lotuta zegoen. Piramideak (faraoien hilobiak), tenpluak, eskulturak eta margolanak egiten zituzten. Monumentu hauek gaur egun ere ikus daitezke eta gizateriaren historiarako oso garrantzitsuak dira."
+                    },
+                    {
+                        galdera: "Zertarako erabiltzen zituzten piramideak?",
+                        erantzuna: "Piramideak faraoien hilobiak ziren. Faraoiak hil ondoren bertan sartzen zituzten, momifikatuta eta ondasunekin batera heriotzaren ondorengo bizitzarako."
+                    },
+                    {
+                        galdera: "Zergatik dago Egiptoko ondarea gaur egun ere oso presente?",
+                        erantzuna: "Egiptoko ondarea gaur egun ere oso presente dago monumentu handi eta iraunkorrak eraiki zituztelako (piramideak, tenpluak...) eta kultura aberatsa garatu zutelako. Ondare hau gizateriaren historiarako oso garrantzitsua da."
+                    },
+                    {
+                        galdera: "Zer ikasi dezakegu gaur egun Egiptoko Antzinako Zibilizaziotik?",
+                        erantzuna: "Egiptoko Antzinako Zibilizaziotik ikasi dezakegu nola antolatu ziren gizarte handiak, nola garatu zuten kultura, artea eta erlijioa, eta nola eragin duten ondorengo zibilizazioetan. Iragana ulertzeko eta kultura desberdinak baloratzen ikasteko balio du."
+                    },
+                    {
+                        galdera: "Zergatik da garrantzitsua antzinako zibilizazioak aztertzea?",
+                        erantzuna: "Antzinako zibilizazioak aztertzea garrantzitsua da gure iragana ulertzeko, kultura desberdinak baloratzen ikasteko eta gure historia hobeto ezagutzeko. Iraganaren ezagutza orainaldia eta etorkizuna hobeto ulertzeko laguntzen digu."
+                    }
+                ]
+            };
+
+            const getRandomQuestion = () => {
+                const allQuestions = [...galderakEtaErantzunak.laburrak, ...galderakEtaErantzunak.luzeak];
+                const randomIndex = Math.floor(Math.random() * allQuestions.length);
+                return allQuestions[randomIndex];
+            };
+
+            const startPraktika = () => {
+                setCurrentScreen('praktika');
+                setCurrentQuestion(getRandomQuestion());
+                setShowAnswer(false);
+                setCanShowAnswer(true); // Mostrar botón inmediatamente
+            };
+
+            const nextQuestion = () => {
+                setCurrentQuestion(getRandomQuestion());
+                setShowAnswer(false);
+                setCanShowAnswer(true); // Mostrar botón inmediatamente
+            };
+
+            const finishPraktika = () => {
+                setCurrentScreen('bukatuta');
+            };
+
+            const TeoriaScreen = () => (
+                <div className="teoria-container">
+                    <div className="section-header">
+                        <h1>Teoria aztertu</h1>
+                        <div className="header-divider"></div>
+                        <p className="subtitle">Hautatu gaia sakontzen hasteko</p>
+                    </div>
+                    
+                    <div className="teoria-layout">
+                        <aside className="topics-sidebar">
+                            {teoriaTopics.map((topic, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => setCurrentTopic(idx)}
+                                    className={`topic-item ${currentTopic === idx ? 'active' : ''}`}
+                                >
+                                    <div className="topic-symbol">
+                                        <EgyptianIcon type={topic.symbol} />
+                                    </div>
+                                    <div className="topic-info">
+                                        <span className="topic-title">{topic.title}</span>
+                                    </div>
+                                </button>
+                            ))}
+                        </aside>
+
+                        <div className="content-main">
+                            <div className="content-card egyptian-pattern">
+                                <div className="card-border"></div>
+                                <h2 className="content-title">
+                                    <EgyptianIcon type={teoriaTopics[currentTopic].symbol} />
+                                    <span>{teoriaTopics[currentTopic].title}</span>
+                                </h2>
+                                <div className="content-text">
+                                    {teoriaTopics[currentTopic].content.split('\n').map((para, i) => (
+                                        <p key={i}>{para}</p>
+                                    ))}
+                                </div>
+                                
+                                <div className="navigation-buttons">
+                                    {currentTopic > 0 && (
+                                        <button onClick={() => setCurrentTopic(currentTopic - 1)} className="nav-btn secondary">
+                                            <ChevronLeft /> <span>Aurrekoa</span>
+                                        </button>
+                                    )}
+                                    {currentTopic < teoriaTopics.length - 1 && (
+                                        <button onClick={() => setCurrentTopic(currentTopic + 1)} className="nav-btn primary">
+                                            <span>Hurrengoa</span> <ChevronRight />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            <button onClick={startPraktika} className="main-action-btn">
+                                <Brain />
+                                <span>Birpasatzera joan</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const PraktikaScreen = () => (
+                <div className="praktika-container">
+                    <div className="section-header">
+                        <h1>Birpasatu teoria</h1>
+                        <div className="header-divider"></div>
+                        <p className="subtitle">Galdera bat azalduko da ausaz</p>
+                    </div>
+
+                    {currentQuestion && (
+                        <div className="question-card egyptian-pattern">
+                            <div className="card-border"></div>
+                            <div className="question-badge">
+                                <EgyptianIcon type="scroll" />
+                                <span>Galdera</span>
+                            </div>
+                            <h2 className="question-text">{currentQuestion.galdera}</h2>
+                            
+                            {canShowAnswer && !showAnswer && (
+                                <div className="reveal-area">
+                                    <button onClick={() => setShowAnswer(true)} className="reveal-btn">
+                                        <CheckCircle />
+                                        <span>Klikatu zure buruan garatu edo zure koadernoan erantzuna idatzi ondoren</span>
+                                    </button>
+                                </div>
+                            )}
+
+                            {showAnswer && (
+                                <div className="answer-area">
+                                    <div className="answer-badge">
+                                        <EgyptianIcon type="sun" />
+                                        <span>Erantzuna</span>
+                                    </div>
+                                    <p className="encouragement-text">Ondo egin al duzu? Lasai bestela!</p>
+                                    <p className="answer-text">{currentQuestion.erantzuna}</p>
+                                    
+                                    <div className="action-buttons">
+                                        <button onClick={nextQuestion} className="action-btn primary">
+                                            <span>Hurrengo galdera</span>
+                                            <ChevronRight />
+                                        </button>
+                                        <button onClick={finishPraktika} className="action-btn secondary">
+                                            <span>Bukatu birpasaketarekin</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <button onClick={() => setCurrentScreen('teoria')} className="back-link">
+                        <BookOpen />
+                        <span>Teorira itzuli</span>
+                    </button>
+                </div>
+            );
+
+            const BukatutaScreen = () => (
+                <div className="bukatuta-container">
+                    <div className="success-card egyptian-pattern">
+                        <div className="card-border"></div>
+                        <div className="success-icon">
+                            <EgyptianIcon type="star" />
+                        </div>
+                        <h1 className="success-title">Oso ondo!</h1>
+                        <p className="success-message">Hurrengora arte!</p>
+                        
+                        <button onClick={() => {
+                            setCurrentScreen('teoria');
+                            setCurrentTopic(0);
+                        }} className="restart-btn">
+                            Hasierara itzuli
+                        </button>
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="egipto-app lotus-pattern">
+                    <header className="app-header">
+                        <div className="header-pattern"></div>
+                        <div className="logo">
+                            <div className="logo-icon">
+                                <EgyptianIcon type="eye" />
+                            </div>
+                            <h1 className="logo-text">Antzinako Egipto</h1>
+                        </div>
+                        <nav className="header-nav">
+                            <button 
+                                onClick={() => setCurrentScreen('teoria')}
+                                className={`header-nav-btn ${currentScreen === 'teoria' ? 'active' : ''}`}
+                            >
+                                <BookOpen />
+                                <span>Teoria</span>
+                            </button>
+                            <button 
+                                onClick={startPraktika}
+                                className={`header-nav-btn ${currentScreen === 'praktika' ? 'active' : ''}`}
+                            >
+                                <Brain />
+                                <span>Birpasatu</span>
+                            </button>
+                        </nav>
+                    </header>
+
+                    <main className="app-main">
+                        {currentScreen === 'teoria' && <TeoriaScreen />}
+                        {currentScreen === 'praktika' && <PraktikaScreen />}
+                        {currentScreen === 'bukatuta' && <BukatutaScreen />}
+                    </main>
+
+                    <style>{`
+                        .egipto-app {
+                            min-height: 100vh;
+                            background: linear-gradient(135deg, #0d1b2a 0%, #1b3a52 50%, #0d1b2a 100%);
+                            color: #e0f2fe;
+                        }
+
+                        .app-header {
+                            background: linear-gradient(135deg, #1e3a5f 0%, #2c5f8d 100%);
+                            padding: 1rem 1.5rem;
+                            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            border-bottom: 3px solid #60a5fa;
+                            position: relative;
+                            overflow: hidden;
+                        }
+
+                        .header-pattern {
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                            bottom: 0;
+                            background-image: 
+                                linear-gradient(90deg, rgba(96, 165, 250, 0.05) 1px, transparent 1px),
+                                linear-gradient(0deg, rgba(96, 165, 250, 0.05) 1px, transparent 1px);
+                            background-size: 30px 30px;
+                            pointer-events: none;
+                        }
+
+                        .logo {
+                            display: flex;
+                            align-items: center;
+                            gap: 0.75rem;
+                            position: relative;
+                            z-index: 1;
+                        }
+
+                        .logo-icon {
+                            width: 36px;
+                            height: 36px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+                            border-radius: 8px;
+                            color: #0d1b2a;
+                            box-shadow: 0 4px 12px rgba(96, 165, 250, 0.4);
+                        }
+
+                        .logo-icon svg {
+                            width: 24px;
+                            height: 24px;
+                        }
+
+                        .logo-text {
+                            font-family: 'Playfair Display', serif;
+                            font-size: 1.3rem;
+                            font-weight: 700;
+                            color: #60a5fa;
+                            letter-spacing: 1px;
+                            text-transform: uppercase;
+                            text-shadow: 0 2px 8px rgba(96, 165, 250, 0.4);
+                        }
+
+                        .header-nav {
+                            display: flex;
+                            gap: 0.75rem;
+                            position: relative;
+                            z-index: 1;
+                        }
+
+                        .header-nav-btn {
+                            display: flex;
+                            align-items: center;
+                            gap: 0.5rem;
+                            padding: 0.6rem 1.2rem;
+                            background: rgba(30, 58, 95, 0.4);
+                            border: 2px solid rgba(96, 165, 250, 0.3);
+                            border-radius: 8px;
+                            color: #93c5fd;
+                            font-family: 'Inter', sans-serif;
+                            font-size: 0.9rem;
+                            font-weight: 600;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            letter-spacing: 0.5px;
+                        }
+
+                        .header-nav-btn:hover {
+                            background: rgba(30, 58, 95, 0.7);
+                            border-color: #60a5fa;
+                            transform: translateY(-2px);
+                            box-shadow: 0 6px 16px rgba(96, 165, 250, 0.3);
+                        }
+
+                        .header-nav-btn.active {
+                            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+                            border-color: #60a5fa;
+                            color: #0d1b2a;
+                            box-shadow: 0 6px 20px rgba(96, 165, 250, 0.5);
+                        }
+
+                        .app-main {
+                            max-width: 1400px;
+                            margin: 0 auto;
+                            padding: 1rem 1rem;
+                        }
+
+                        .section-header {
+                            text-align: center;
+                            margin-bottom: 1rem;
+                            animation: fadeInDown 0.6s ease-out;
+                        }
+
+                        @keyframes fadeInDown {
+                            from {
+                                opacity: 0;
+                                transform: translateY(-30px);
+                            }
+                            to {
+                                opacity: 1;
+                                transform: translateY(0);
+                            }
+                        }
+
+                        .section-header h1 {
+                            font-family: 'Playfair Display', serif;
+                            font-size: 1.6rem;
+                            font-weight: 700;
+                            color: #60a5fa;
+                            margin-bottom: 0.5rem;
+                            letter-spacing: 1px;
+                            text-transform: uppercase;
+                            text-shadow: 0 4px 12px rgba(96, 165, 250, 0.4);
+                        }
+
+                        .header-divider {
+                            width: 120px;
+                            height: 2px;
+                            background: linear-gradient(90deg, transparent, #60a5fa, transparent);
+                            margin: 0.75rem auto;
+                        }
+
+                        .subtitle {
+                            font-family: 'Inter', sans-serif;
+                            font-size: 0.9rem;
+                            color: #93c5fd;
+                            font-style: italic;
+                        }
+
+                        .teoria-layout {
+                            display: grid;
+                            grid-template-columns: 250px 1fr;
+                            gap: 1rem;
+                            animation: fadeIn 0.8s ease-out;
+                        }
+
+                        @keyframes fadeIn {
+                            from { opacity: 0; }
+                            to { opacity: 1; }
+                        }
+
+                        .topics-sidebar {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 0.4rem;
+                        }
+
+                        .topic-item {
+                            display: flex;
+                            align-items: center;
+                            gap: 0.5rem;
+                            padding: 0.4rem 0.5rem;
+                            background: rgba(30, 58, 95, 0.3);
+                            border: 2px solid rgba(96, 165, 250, 0.2);
+                            border-radius: 8px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            text-align: left;
+                            width: 100%;
+                            position: relative;
+                            overflow: hidden;
+                        }
+
+                        .topic-item::before {
+                            content: '';
+                            position: absolute;
+                            left: 0;
+                            top: 0;
+                            bottom: 0;
+                            width: 4px;
+                            background: #60a5fa;
+                            transform: scaleY(0);
+                            transition: transform 0.3s ease;
+                        }
+
+                        .topic-item:hover {
+                            transform: translateX(8px);
+                            border-color: #60a5fa;
+                            background: rgba(30, 58, 95, 0.5);
+                        }
+
+                        .topic-item:hover::before {
+                            transform: scaleY(1);
+                        }
+
+                        .topic-item.active {
+                            background: linear-gradient(135deg, rgba(96, 165, 250, 0.15), rgba(30, 58, 95, 0.6));
+                            border-color: #60a5fa;
+                            box-shadow: 0 4px 16px rgba(96, 165, 250, 0.3);
+                        }
+
+                        .topic-item.active::before {
+                            transform: scaleY(1);
+                        }
+
+                        .topic-symbol {
+                            width: 24px;
+                            height: 24px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+                            border-radius: 5px;
+                            color: #0d1b2a;
+                            flex-shrink: 0;
+                        }
+
+                        .topic-symbol svg {
+                            width: 16px;
+                            height: 16px;
+                        }
+
+                        .topic-info {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 0;
+                        }
+
+                        .topic-title {
+                            font-family: 'Playfair Display', serif;
+                            font-size: 0.8rem;
+                            font-weight: 600;
+                            color: #e0f2fe;
+                            letter-spacing: 0.3px;
+                            line-height: 1.2;
+                        }
+
+                        .content-main {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 1rem;
+                        }
+
+                        .content-card {
+                            background: rgba(26, 41, 66, 0.6);
+                            border: 2px solid rgba(96, 165, 250, 0.3);
+                            border-radius: 12px;
+                            padding: 1.25rem;
+                            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+                            animation: slideIn 0.6s ease-out;
+                            position: relative;
+                        }
+
+                        .card-border {
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                            bottom: 0;
+                            border: 1px solid rgba(96, 165, 250, 0.1);
+                            border-radius: 16px;
+                            pointer-events: none;
+                        }
+
+                        @keyframes slideIn {
+                            from {
+                                opacity: 0;
+                                transform: translateX(-30px);
+                            }
+                            to {
+                                opacity: 1;
+                                transform: translateX(0);
+                            }
+                        }
+
+                        .content-title {
+                            display: flex;
+                            align-items: center;
+                            gap: 0.75rem;
+                            font-family: 'Playfair Display', serif;
+                            font-size: 1.2rem;
+                            font-weight: 700;
+                            color: #60a5fa;
+                            margin-bottom: 1rem;
+                            padding-bottom: 0.75rem;
+                            border-bottom: 2px solid rgba(96, 165, 250, 0.3);
+                            letter-spacing: 0.5px;
+                        }
+
+                        .content-title svg {
+                            width: 24px;
+                            height: 24px;
+                        }
+
+                        .content-text p {
+                            color: #bfdbfe;
+                            font-family: 'Inter', sans-serif;
+                            font-size: 0.95rem;
+                            line-height: 1.6;
+                            margin-bottom: 0.85rem;
+                            text-align: justify;
+                        }
+
+                        .navigation-buttons {
+                            display: flex;
+                            justify-content: space-between;
+                            margin-top: 1rem;
+                            gap: 0.75rem;
+                        }
+
+                        .nav-btn {
+                            display: flex;
+                            align-items: center;
+                            gap: 0.4rem;
+                            padding: 0.6rem 1.25rem;
+                            border: 2px solid #60a5fa;
+                            border-radius: 8px;
+                            font-family: 'Inter', sans-serif;
+                            font-size: 0.85rem;
+                            font-weight: 600;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            letter-spacing: 0.3px;
+                        }
+
+                        .nav-btn.primary {
+                            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+                            color: #0d1b2a;
+                            border-color: #60a5fa;
+                        }
+
+                        .nav-btn.primary:hover {
+                            background: linear-gradient(135deg, #3b82f6, #2563eb);
+                            transform: translateY(-2px);
+                            box-shadow: 0 8px 20px rgba(96, 165, 250, 0.4);
+                        }
+
+                        .nav-btn.secondary {
+                            background: rgba(30, 58, 95, 0.5);
+                            color: #93c5fd;
+                        }
+
+                        .nav-btn.secondary:hover {
+                            background: rgba(30, 58, 95, 0.8);
+                            transform: translateY(-2px);
+                            box-shadow: 0 8px 20px rgba(30, 58, 95, 0.4);
+                        }
+
+                        .main-action-btn {
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 0.6rem;
+                            width: 100%;
+                            padding: 0.85rem 1.75rem;
+                            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+                            border: none;
+                            border-radius: 10px;
+                            color: #0d1b2a;
+                            font-family: 'Inter', sans-serif;
+                            font-size: 1rem;
+                            font-weight: 700;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            box-shadow: 0 8px 24px rgba(96, 165, 250, 0.4);
+                            letter-spacing: 0.5px;
+                            text-transform: uppercase;
+                        }
+
+                        .main-action-btn:hover {
+                            transform: translateY(-3px);
+                            box-shadow: 0 12px 32px rgba(96, 165, 250, 0.6);
+                            background: linear-gradient(135deg, #3b82f6, #2563eb);
+                        }
+
+                        .question-card {
+                            background: rgba(26, 41, 66, 0.7);
+                            border: 2px solid rgba(96, 165, 250, 0.3);
+                            border-radius: 16px;
+                            padding: 2rem;
+                            box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+                            animation: fadeIn 0.6s ease-out;
+                            position: relative;
+                            max-width: 900px;
+                            margin: 0 auto;
+                        }
+
+                        .question-badge,
+                        .answer-badge {
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 0.5rem;
+                            padding: 0.5rem 1rem;
+                            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+                            color: #0d1b2a;
+                            border-radius: 24px;
+                            font-family: 'Inter', sans-serif;
+                            font-weight: 700;
+                            font-size: 0.85rem;
+                            margin-bottom: 1.25rem;
+                            letter-spacing: 0.5px;
+                            text-transform: uppercase;
+                        }
+
+                        .answer-badge {
+                            background: linear-gradient(135deg, #34d399, #10b981);
+                            color: #0d1b2a;
+                        }
+
+                        .question-text {
+                            color: #e0f2fe;
+                            font-family: 'Inter', sans-serif;
+                            font-size: 1.3rem;
+                            font-weight: 500;
+                            line-height: 1.6;
+                            margin-bottom: 2rem;
+                        }
+
+                        .thinking-area {
+                            padding: 4rem 2rem;
+                            text-align: center;
+                            opacity: 1;
+                            animation: none;
+                            transition: none;
+                        }
+
+                        .thinking-icon {
+                            width: 80px;
+                            height: 80px;
+                            margin: 0 auto 2rem;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            background: linear-gradient(135deg, rgba(96, 165, 250, 0.2), rgba(30, 58, 95, 0.4));
+                            border: 2px solid rgba(96, 165, 250, 0.4);
+                            border-radius: 50%;
+                            color: #60a5fa;
+                            opacity: 1;
+                            animation: none;
+                            transition: none;
+                        }
+
+                        .thinking-icon svg {
+                            width: 48px;
+                            height: 48px;
+                        }
+
+                        .thinking-text {
+                            font-family: 'Inter', sans-serif;
+                            font-size: 1.3rem;
+                            color: #93c5fd;
+                            font-style: italic;
+                            opacity: 1;
+                            animation: none;
+                            transition: none;
+                        }
+
+                        .reveal-area {
+                            padding: 2rem 0;
+                            text-align: center;
+                        }
+
+                        .reveal-btn {
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 0.75rem;
+                            padding: 1rem 2rem;
+                            background: linear-gradient(135deg, #34d399, #10b981);
+                            border: none;
+                            border-radius: 12px;
+                            color: #0d1b2a;
+                            font-family: 'Inter', sans-serif;
+                            font-size: 1rem;
+                            font-weight: 700;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            box-shadow: 0 8px 24px rgba(52, 211, 153, 0.4);
+                            letter-spacing: 0.5px;
+                            text-transform: uppercase;
+                        }
+
+                        .reveal-btn:hover {
+                            transform: translateY(-3px);
+                            box-shadow: 0 12px 32px rgba(52, 211, 153, 0.6);
+                            background: linear-gradient(135deg, #10b981, #059669);
+                        }
+
+                        .answer-area {
+                            margin-top: 1.5rem;
+                            padding: 1.5rem;
+                            background: linear-gradient(135deg, rgba(52, 211, 153, 0.1), rgba(16, 185, 129, 0.15));
+                            border-radius: 12px;
+                            border: 2px solid rgba(52, 211, 153, 0.3);
+                            animation: fadeIn 0.6s ease-out;
+                        }
+
+                        .encouragement-text {
+                            color: #34d399;
+                            font-family: 'Inter', sans-serif;
+                            font-size: 1rem;
+                            font-weight: 600;
+                            text-align: center;
+                            margin-bottom: 1rem;
+                            font-style: italic;
+                        }
+
+                        .answer-text {
+                            color: #e0f2fe;
+                            font-family: 'Inter', sans-serif;
+                            font-size: 1.05rem;
+                            line-height: 1.7;
+                            margin-bottom: 1.5rem;
+                        }
+
+                        .action-buttons {
+                            display: flex;
+                            gap: 1rem;
+                            justify-content: center;
+                            flex-wrap: wrap;
+                        }
+
+                        .action-btn {
+                            display: flex;
+                            align-items: center;
+                            gap: 0.5rem;
+                            padding: 0.9rem 1.75rem;
+                            border-radius: 10px;
+                            font-family: 'Inter', sans-serif;
+                            font-size: 0.95rem;
+                            font-weight: 600;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            border: 2px solid transparent;
+                            letter-spacing: 0.5px;
+                        }
+
+                        .action-btn.primary {
+                            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+                            color: #0d1b2a;
+                        }
+
+                        .action-btn.primary:hover {
+                            background: linear-gradient(135deg, #3b82f6, #2563eb);
+                            transform: translateY(-2px);
+                            box-shadow: 0 8px 20px rgba(96, 165, 250, 0.4);
+                        }
+
+                        .action-btn.secondary {
+                            background: rgba(30, 58, 95, 0.6);
+                            color: #93c5fd;
+                            border-color: #60a5fa;
+                        }
+
+                        .action-btn.secondary:hover {
+                            background: rgba(30, 58, 95, 0.9);
+                            transform: translateY(-2px);
+                        }
+
+                        .back-link {
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 0.75rem;
+                            margin-top: 3rem;
+                            padding: 1rem 2rem;
+                            background: rgba(30, 58, 95, 0.4);
+                            border: 2px solid rgba(96, 165, 250, 0.3);
+                            border-radius: 10px;
+                            color: #93c5fd;
+                            font-family: 'Inter', sans-serif;
+                            font-size: 1rem;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            letter-spacing: 0.5px;
+                        }
+
+                        .back-link:hover {
+                            background: rgba(30, 58, 95, 0.7);
+                            border-color: #60a5fa;
+                        }
+
+                        .bukatuta-container {
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            min-height: 60vh;
+                            padding: 4rem 2rem;
+                        }
+
+                        .success-card {
+                            background: rgba(26, 41, 66, 0.7);
+                            border: 2px solid rgba(96, 165, 250, 0.3);
+                            border-radius: 16px;
+                            padding: 5rem 4rem;
+                            text-align: center;
+                            max-width: 600px;
+                            position: relative;
+                            animation: bounceIn 0.8s ease-out;
+                        }
+
+                        @keyframes bounceIn {
+                            0% {
+                                opacity: 0;
+                                transform: scale(0.3);
+                            }
+                            50% {
+                                transform: scale(1.05);
+                            }
+                            100% {
+                                opacity: 1;
+                                transform: scale(1);
+                            }
+                        }
+
+                        .success-icon {
+                            width: 120px;
+                            height: 120px;
+                            margin: 0 auto 2rem;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+                            border-radius: 50%;
+                            color: #0d1b2a;
+                            box-shadow: 0 8px 24px rgba(96, 165, 250, 0.5);
+                        }
+
+                        .success-icon svg {
+                            width: 72px;
+                            height: 72px;
+                        }
+
+                        .success-title {
+                            font-family: 'Playfair Display', serif;
+                            font-size: 3.5rem;
+                            font-weight: 700;
+                            color: #60a5fa;
+                            margin-bottom: 1.5rem;
+                            letter-spacing: 2px;
+                            text-transform: uppercase;
+                        }
+
+                        .success-message {
+                            font-family: 'Inter', sans-serif;
+                            font-size: 1.8rem;
+                            color: #93c5fd;
+                            margin-bottom: 3rem;
+                            font-style: italic;
+                        }
+
+                        .restart-btn {
+                            padding: 1.5rem 3rem;
+                            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+                            border: none;
+                            border-radius: 12px;
+                            color: #0d1b2a;
+                            font-family: 'Inter', sans-serif;
+                            font-size: 1.2rem;
+                            font-weight: 700;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            box-shadow: 0 8px 24px rgba(96, 165, 250, 0.4);
+                            letter-spacing: 1px;
+                            text-transform: uppercase;
+                        }
+
+                        .restart-btn:hover {
+                            transform: translateY(-3px);
+                            box-shadow: 0 12px 32px rgba(96, 165, 250, 0.6);
+                            background: linear-gradient(135deg, #3b82f6, #2563eb);
+                        }
+
+                        @media (max-width: 968px) {
+                            .app-header {
+                                flex-direction: column;
+                                gap: 2rem;
+                                padding: 2rem;
+                            }
+
+                            .logo-text {
+                                font-size: 1.6rem;
+                            }
+
+                            .header-nav {
+                                width: 100%;
+                            }
+
+                            .header-nav-btn {
+                                flex: 1;
+                                justify-content: center;
+                            }
+
+                            .section-header h1 {
+                                font-size: 2.2rem;
+                            }
+
+                            .teoria-layout {
+                                grid-template-columns: 1fr;
+                            }
+
+                            .topics-sidebar {
+                                order: 2;
+                                margin-top: 2rem;
+                            }
+
+                            .content-main {
+                                order: 1;
+                            }
+
+                            .question-card {
+                                padding: 2.5rem 2rem;
+                            }
+
+                            .question-text {
+                                font-size: 1.5rem;
+                            }
+
+                            .action-buttons {
+                                flex-direction: column;
+                            }
+
+                            .action-btn {
+                                width: 100%;
+                                justify-content: center;
+                            }
+                        }
+                    `}</style>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<EgiptoApp />);
+    </script>
+</body>
+</html>
